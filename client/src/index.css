@@ -39,25 +39,25 @@
 }
 
 .dark {
-  --background: hsl(217, 33%, 17%);
-  --foreground: hsl(0, 0%, 95%);
-  --muted: hsl(217, 33%, 22%);
-  --muted-foreground: hsl(0, 0%, 63%);
-  --popover: hsl(217, 33%, 17%);
-  --popover-foreground: hsl(0, 0%, 95%);
-  --card: hsl(217, 33%, 17%);
-  --card-foreground: hsl(0, 0%, 95%);
-  --border: hsl(217, 33%, 22%);
-  --input: hsl(217, 33%, 22%);
-  --primary: hsl(0, 0%, 95%);
-  --primary-foreground: hsl(0, 0%, 7%);
-  --secondary: hsl(217, 33%, 22%);
-  --secondary-foreground: hsl(0, 0%, 95%);
-  --accent: hsl(217, 33%, 22%);
-  --accent-foreground: hsl(0, 0%, 95%);
+  --background: hsl(0, 0%, 8%);
+  --foreground: hsl(0, 0%, 100%);
+  --muted: hsl(0, 0%, 15%);
+  --muted-foreground: hsl(0, 0%, 75%);
+  --popover: hsl(0, 0%, 12%);
+  --popover-foreground: hsl(0, 0%, 100%);
+  --card: hsl(0, 0%, 12%);
+  --card-foreground: hsl(0, 0%, 100%);
+  --border: hsl(0, 0%, 20%);
+  --input: hsl(0, 0%, 15%);
+  --primary: hsl(0, 0%, 100%);
+  --primary-foreground: hsl(0, 0%, 8%);
+  --secondary: hsl(0, 0%, 15%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --accent: hsl(0, 0%, 18%);
+  --accent-foreground: hsl(0, 0%, 100%);
   --destructive: hsl(0, 62%, 50%);
-  --destructive-foreground: hsl(0, 0%, 95%);
-  --ring: hsl(0, 0%, 95%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --ring: hsl(0, 0%, 100%);
   --radius: 0.5rem;
 }
 
@@ -72,7 +72,7 @@
   }
 
   html.dark {
-    background-color: hsl(217, 33%, 17%);
+    background-color: hsl(0, 0%, 8%);
   }
 }
 
@@ -91,13 +91,14 @@
   }
   
   .dark .chatgpt-input {
-    background: hsl(217, 33%, 22%);
-    border: 1px solid hsl(217, 33%, 28%);
+    background: hsl(0, 0%, 15%);
+    border: 1px solid hsl(0, 0%, 25%);
+    color: hsl(0, 0%, 100%);
   }
   
   .dark .chatgpt-input:focus {
-    border-color: hsl(217, 33%, 35%);
-    box-shadow: 0 0 0 2px hsl(217, 33%, 25%);
+    border-color: hsl(0, 0%, 35%);
+    box-shadow: 0 0 0 2px hsl(0, 0%, 20%);
   }
   
   .chatgpt-button {
@@ -117,17 +118,17 @@
   }
   
   .dark .chatgpt-button {
-    background: hsl(0, 0%, 95%);
-    color: hsl(0, 0%, 7%);
+    background: hsl(0, 0%, 100%);
+    color: hsl(0, 0%, 8%);
   }
   
   .dark .chatgpt-button:hover {
-    background: hsl(0, 0%, 90%);
+    background: hsl(0, 0%, 95%);
   }
   
   .dark .chatgpt-button:disabled {
-    background: hsl(217, 33%, 28%);
-    color: hsl(0, 0%, 45%);
+    background: hsl(0, 0%, 25%);
+    color: hsl(0, 0%, 55%);
   }
 
   .message-user {
@@ -135,7 +136,7 @@
   }
   
   .dark .message-user {
-    background: hsl(217, 33%, 22%);
+    background: hsl(0, 0%, 15%);
   }
   
   .message-assistant {
