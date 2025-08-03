@@ -127,6 +127,7 @@ export class MemStorage implements IStorage {
       ...insertMessage,
       id,
       sessionId: insertMessage.sessionId || null,
+      metadata: insertMessage.metadata || null,
       createdAt: new Date()
     };
     this.messages.set(id, message);
@@ -147,6 +148,7 @@ export class MemStorage implements IStorage {
       sessionId: insertWorkflow.sessionId || null,
       status: insertWorkflow.status || "planning",
       currentStep: insertWorkflow.currentStep || null,
+      steps: insertWorkflow.steps || null,
       progress: insertWorkflow.progress || 0,
       startedAt: new Date(),
       completedAt: null
@@ -180,6 +182,7 @@ export class MemStorage implements IStorage {
       id,
       sessionId: insertDocument.sessionId || null,
       content: insertDocument.content || null,
+      metadata: insertDocument.metadata || null,
       uploadedAt: new Date()
     };
     this.documents.set(id, document);
@@ -201,6 +204,7 @@ export class MemStorage implements IStorage {
       sessionId: insertSource.sessionId || null,
       url: insertSource.url || null,
       content: insertSource.content || null,
+      metadata: insertSource.metadata || null,
       addedAt: new Date()
     };
     this.sources.set(id, source);
@@ -220,6 +224,7 @@ export class MemStorage implements IStorage {
       ...insertLog,
       id,
       sessionId: insertLog.sessionId || null,
+      metadata: insertLog.metadata || null,
       timestamp: new Date()
     };
     this.agentLogs.set(id, log);

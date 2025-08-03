@@ -9,16 +9,18 @@ The application is built as a monorepo with a React TypeScript frontend and Expr
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+UI/UX Preferences: ChatGPT-like clean and professional design with simplified interface.
 
 ## System Architecture
 
 ### Frontend Architecture
 - **Framework**: React with TypeScript and Vite for development
 - **UI Components**: Radix UI primitives with shadcn/ui components for consistent design
-- **Styling**: Tailwind CSS with custom design tokens and dark theme support
+- **Styling**: Tailwind CSS with ChatGPT-inspired color scheme and clean design
 - **State Management**: TanStack Query for server state and React hooks for local state
-- **Routing**: Wouter for lightweight client-side routing
-- **Layout**: Three-panel layout with left sidebar for agent selection, center panel for chat, and right panel for sources/exports
+- **Routing**: Wouter for lightweight client-side routing  
+- **Layout**: Single-page chat interface with quick action buttons (ChatGPT-style)
+- **Theme**: Clean professional design with light/dark mode support
 
 ### Backend Architecture
 - **Framework**: Express.js with TypeScript
