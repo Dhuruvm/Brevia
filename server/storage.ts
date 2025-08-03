@@ -96,6 +96,8 @@ export class MemStorage implements IStorage {
     const session: ChatSession = {
       ...insertSession,
       id,
+      userId: insertSession.userId || null,
+      status: insertSession.status || "active",
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -124,6 +126,7 @@ export class MemStorage implements IStorage {
     const message: Message = {
       ...insertMessage,
       id,
+      sessionId: insertMessage.sessionId || null,
       createdAt: new Date()
     };
     this.messages.set(id, message);
@@ -141,6 +144,10 @@ export class MemStorage implements IStorage {
     const workflow: AgentWorkflow = {
       ...insertWorkflow,
       id,
+      sessionId: insertWorkflow.sessionId || null,
+      status: insertWorkflow.status || "planning",
+      currentStep: insertWorkflow.currentStep || null,
+      progress: insertWorkflow.progress || 0,
       startedAt: new Date(),
       completedAt: null
     };
@@ -171,6 +178,8 @@ export class MemStorage implements IStorage {
     const document: Document = {
       ...insertDocument,
       id,
+      sessionId: insertDocument.sessionId || null,
+      content: insertDocument.content || null,
       uploadedAt: new Date()
     };
     this.documents.set(id, document);
@@ -189,6 +198,9 @@ export class MemStorage implements IStorage {
     const source: Source = {
       ...insertSource,
       id,
+      sessionId: insertSource.sessionId || null,
+      url: insertSource.url || null,
+      content: insertSource.content || null,
       addedAt: new Date()
     };
     this.sources.set(id, source);
@@ -207,6 +219,7 @@ export class MemStorage implements IStorage {
     const log: AgentLog = {
       ...insertLog,
       id,
+      sessionId: insertLog.sessionId || null,
       timestamp: new Date()
     };
     this.agentLogs.set(id, log);
