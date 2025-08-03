@@ -147,19 +147,19 @@ export default function Chat() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="md:hidden hover:bg-accent"
+                className="md:hidden header-button"
                 onClick={() => setSidebarOpen(true)}
               >
-                <Menu className="w-4 h-4" />
+                <Menu className="w-4 h-4 header-icon" />
               </Button>
-              <h1 className="text-xl font-semibold text-foreground">
+              <h1 className="text-xl font-semibold header-text">
                 {currentSession?.title || "Brevia AI"}
               </h1>
             </div>
             <Button 
               variant="ghost" 
               size="sm" 
-              className="hover:bg-accent"
+              className="header-button"
               onClick={handleNewChat}
             >
               New Chat
