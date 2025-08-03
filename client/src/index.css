@@ -4,61 +4,64 @@
 
 :root {
   --background: hsl(0, 0%, 100%);
-  --foreground: hsl(20, 14.3%, 4.1%);
-  --muted: hsl(60, 4.8%, 95.9%);
-  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --foreground: hsl(223, 23%, 13%);
+  --muted: hsl(220, 13%, 95%);
+  --muted-foreground: hsl(223, 5%, 55%);
   --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --popover-foreground: hsl(223, 23%, 13%);
   --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(20, 14.3%, 4.1%);
-  --border: hsl(20, 5.9%, 90%);
-  --input: hsl(20, 5.9%, 90%);
-  --primary: hsl(178, 100%, 37%);
+  --card-foreground: hsl(223, 23%, 13%);
+  --border: hsl(220, 13%, 91%);
+  --input: hsl(220, 13%, 91%);
+  --primary: hsl(221, 83%, 53%);
   --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(195, 100%, 62%);
+  --secondary: hsl(215, 25%, 27%);
   --secondary-foreground: hsl(0, 0%, 100%);
-  --accent: hsl(267, 84%, 81%);
-  --accent-foreground: hsl(0, 0%, 100%);
+  --accent: hsl(267, 57%, 78%);
+  --accent-foreground: hsl(223, 23%, 13%);
   --destructive: hsl(0, 84.2%, 60.2%);
   --destructive-foreground: hsl(60, 9.1%, 97.8%);
-  --ring: hsl(20, 14.3%, 4.1%);
-  --radius: 0.5rem;
+  --ring: hsl(221, 83%, 53%);
+  --radius: 0.75rem;
   
-  /* Custom Brevia colors */
-  --brevia-dark: hsl(240, 10%, 11%);
-  --brevia-light: hsl(210, 40%, 98%);
-  --brevia-primary: hsl(178, 100%, 37%);
-  --brevia-secondary: hsl(195, 100%, 62%);
-  --brevia-accent: hsl(267, 84%, 81%);
-  --brevia-gray-800: hsl(240, 6%, 10%);
-  --brevia-gray-700: hsl(240, 5%, 15%);
-  --brevia-gray-600: hsl(240, 4%, 20%);
-  --brevia-gray-500: hsl(240, 3%, 40%);
-  --brevia-gray-400: hsl(240, 3%, 60%);
-  --brevia-gray-300: hsl(240, 2%, 80%);
+  /* Gemini-inspired colors */
+  --gemini-blue: hsl(221, 83%, 53%);
+  --gemini-blue-light: hsl(221, 83%, 65%);
+  --gemini-blue-dark: hsl(221, 83%, 35%);
+  --gemini-purple: hsl(267, 57%, 78%);
+  --gemini-gray-50: hsl(220, 13%, 98%);
+  --gemini-gray-100: hsl(220, 13%, 95%);
+  --gemini-gray-200: hsl(220, 13%, 91%);
+  --gemini-gray-300: hsl(220, 9%, 79%);
+  --gemini-gray-400: hsl(223, 5%, 64%);
+  --gemini-gray-500: hsl(223, 5%, 55%);
+  --gemini-gray-600: hsl(223, 12%, 35%);
+  --gemini-gray-700: hsl(223, 23%, 23%);
+  --gemini-gray-800: hsl(223, 23%, 13%);
+  --gemini-gray-900: hsl(223, 47%, 11%);
 }
 
 .dark {
-  --background: hsl(240, 10%, 11%);
+  --background: hsl(223, 47%, 11%);
   --foreground: hsl(0, 0%, 98%);
-  --muted: hsl(240, 3.7%, 15.9%);
-  --muted-foreground: hsl(240, 5%, 64.9%);
-  --popover: hsl(240, 10%, 11%);
+  --muted: hsl(223, 23%, 18%);
+  --muted-foreground: hsl(223, 5%, 64%);
+  --popover: hsl(223, 23%, 13%);
   --popover-foreground: hsl(0, 0%, 98%);
-  --card: hsl(240, 10%, 11%);
+  --card: hsl(223, 23%, 13%);
   --card-foreground: hsl(0, 0%, 98%);
-  --border: hsl(240, 3.7%, 15.9%);
-  --input: hsl(240, 3.7%, 15.9%);
-  --primary: hsl(178, 100%, 37%);
+  --border: hsl(223, 23%, 18%);
+  --input: hsl(223, 23%, 18%);
+  --primary: hsl(221, 83%, 53%);
   --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(195, 100%, 62%);
-  --secondary-foreground: hsl(0, 0%, 100%);
-  --accent: hsl(267, 84%, 81%);
-  --accent-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(223, 23%, 23%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(267, 57%, 78%);
+  --accent-foreground: hsl(223, 23%, 13%);
   --destructive: hsl(0, 62.8%, 30.6%);
   --destructive-foreground: hsl(0, 0%, 98%);
-  --ring: hsl(240, 4.9%, 83.9%);
-  --radius: 0.5rem;
+  --ring: hsl(221, 83%, 53%);
+  --radius: 0.75rem;
 }
 
 @layer base {
@@ -72,33 +75,44 @@
   }
 
   html.dark {
-    background-color: hsl(240, 10%, 11%);
+    background-color: hsl(223, 47%, 11%);
   }
 }
 
 @layer components {
-  .brevia-gradient {
-    background: linear-gradient(135deg, var(--brevia-primary), var(--brevia-secondary), var(--brevia-accent));
+  .gemini-gradient {
+    background: linear-gradient(135deg, hsl(221, 83%, 53%), hsl(267, 57%, 78%), hsl(221, 83%, 65%));
   }
   
-  .brevia-glass {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+  .gemini-glass {
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
   
-  .dark .brevia-glass {
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+  .dark .gemini-glass {
+    background: rgba(34, 42, 69, 0.4);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
   
-  .brevia-glow {
-    box-shadow: 0 0 20px rgba(0, 191, 166, 0.3);
+  .gemini-glow {
+    box-shadow: 0 0 24px hsla(221, 83%, 53%, 0.3);
   }
   
-  .brevia-glow:hover {
-    box-shadow: 0 0 30px rgba(0, 191, 166, 0.5);
+  .gemini-glow:hover {
+    box-shadow: 0 0 32px hsla(221, 83%, 53%, 0.5);
+  }
+  
+  .gemini-button {
+    background: linear-gradient(135deg, hsl(221, 83%, 53%), hsl(221, 83%, 58%));
+    border: 1px solid hsl(221, 83%, 65%);
+    box-shadow: 0 2px 8px hsla(221, 83%, 53%, 0.2);
+  }
+  
+  .gemini-button:hover {
+    background: linear-gradient(135deg, hsl(221, 83%, 58%), hsl(221, 83%, 63%));
+    box-shadow: 0 4px 12px hsla(221, 83%, 53%, 0.3);
   }
 }
 
@@ -123,11 +137,11 @@
 @keyframes pulse-glow {
   0%, 100% {
     opacity: 1;
-    box-shadow: 0 0 20px rgba(0, 191, 166, 0.3);
+    box-shadow: 0 0 24px hsla(221, 83%, 53%, 0.3);
   }
   50% {
     opacity: 0.8;
-    box-shadow: 0 0 30px rgba(0, 191, 166, 0.6);
+    box-shadow: 0 0 32px hsla(221, 83%, 53%, 0.6);
   }
 }
 

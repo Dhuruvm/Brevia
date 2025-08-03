@@ -91,17 +91,17 @@ export default function RightPanel({ session, sources, logs, workflow }: RightPa
   ];
 
   return (
-    <aside className="w-80 bg-brevia-dark/60 backdrop-blur-xl border-l border-gray-800/50 overflow-y-auto">
+    <aside className="w-80 bg-card/60 backdrop-blur-xl border-l border-border overflow-y-auto gemini-glass">
       {/* Results Header */}
-      <div className="p-4 border-b border-gray-800/50">
+      <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-medium">Results & Outputs</h3>
+          <h3 className="text-sm font-medium text-foreground">Results & Outputs</h3>
           <Button
             variant="ghost"
             size="sm"
-            className="p-1.5 rounded-lg bg-gray-800/50 hover:bg-gray-700/50"
+            className="p-2 rounded-xl bg-muted/50 hover:bg-muted/70 border border-border/50"
           >
-            <Download className="w-3 h-3 text-gray-400" />
+            <Download className="w-3 h-3 text-muted-foreground" />
           </Button>
         </div>
         
@@ -110,40 +110,40 @@ export default function RightPanel({ session, sources, logs, workflow }: RightPa
           <Button
             variant="ghost"
             size="sm"
-            className="px-2 py-1 bg-gray-800/50 text-xs rounded-lg hover:bg-gray-700/50"
+            className="px-3 py-2 bg-muted/50 text-xs rounded-xl hover:bg-muted/70 border border-border/50"
             onClick={() => handleExport('pdf')}
           >
-            <FileText className="w-3 h-3 text-red-400 mr-1" />
+            <FileText className="w-3 h-3 text-red-500 mr-1" />
             PDF
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            className="px-2 py-1 bg-gray-800/50 text-xs rounded-lg hover:bg-gray-700/50"
+            className="px-3 py-2 bg-muted/50 text-xs rounded-xl hover:bg-muted/70 border border-border/50"
             onClick={() => handleExport('docx')}
           >
-            <FileText className="w-3 h-3 text-blue-400 mr-1" />
+            <FileText className="w-3 h-3 text-blue-500 mr-1" />
             DOCX
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            className="px-2 py-1 bg-gray-800/50 text-xs rounded-lg hover:bg-gray-700/50"
+            className="px-3 py-2 bg-muted/50 text-xs rounded-xl hover:bg-muted/70 border border-border/50"
             onClick={() => handleExport('md')}
           >
-            <FileCode className="w-3 h-3 text-gray-400 mr-1" />
+            <FileCode className="w-3 h-3 text-muted-foreground mr-1" />
             MD
           </Button>
         </div>
       </div>
 
       {/* Source Timeline */}
-      <div className="p-4 border-b border-gray-800/50">
-        <h4 className="text-sm font-medium mb-3">Source Timeline</h4>
+      <div className="p-4 border-b border-border">
+        <h4 className="text-sm font-medium mb-3 text-foreground">Source Timeline</h4>
         <ScrollArea className="max-h-48">
           <div className="space-y-3">
             {sources.length === 0 ? (
-              <div className="text-xs text-gray-500 text-center py-4">
+              <div className="text-xs text-muted-foreground text-center py-4">
                 No sources found yet
               </div>
             ) : (
@@ -151,14 +151,14 @@ export default function RightPanel({ session, sources, logs, workflow }: RightPa
                 <div key={source.id} className="flex items-start space-x-3">
                   <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <div className="text-xs font-medium truncate">{source.title}</div>
-                    <div className="text-xs text-gray-400 mb-1">
+                    <div className="text-xs font-medium truncate text-foreground">{source.title}</div>
+                    <div className="text-xs text-muted-foreground mb-1">
                       {source.url ? new URL(source.url).hostname : 'Local'} • {
                         source.addedAt ? new Date(source.addedAt).toLocaleTimeString() : 'Recently'
                       }
                     </div>
                     {source.content && (
-                      <div className="text-xs text-gray-500 leading-relaxed line-clamp-2">
+                      <div className="text-xs text-muted-foreground/70 leading-relaxed line-clamp-2">
                         {source.content.substring(0, 100)}...
                       </div>
                     )}
@@ -171,32 +171,32 @@ export default function RightPanel({ session, sources, logs, workflow }: RightPa
       </div>
 
       {/* Generated Artifacts */}
-      <div className="p-4 border-b border-gray-800/50">
-        <h4 className="text-sm font-medium mb-3">Generated Artifacts</h4>
+      <div className="p-4 border-b border-border">
+        <h4 className="text-sm font-medium mb-3 text-foreground">Generated Artifacts</h4>
         <div className="space-y-3">
           {workflow && workflow.status === "completed" ? artifacts.map((artifact, index) => (
             <Card 
               key={index}
-              className="p-3 cursor-pointer hover:bg-gray-700/30 transition-all bg-gray-800/30 border-gray-700/50"
+              className="p-3 cursor-pointer hover:bg-muted/40 transition-all bg-muted/20 border-border/50 rounded-xl"
             >
               <div className="flex items-center space-x-2 mb-2">
                 {getSourceIcon(artifact.name.toLowerCase())}
-                <span className="text-sm font-medium">{artifact.name}</span>
+                <span className="text-sm font-medium text-foreground">{artifact.name}</span>
               </div>
-              <div className="text-xs text-gray-400 mb-2">{artifact.description}</div>
+              <div className="text-xs text-muted-foreground mb-2">{artifact.description}</div>
               <div className="flex space-x-2">
-                <Badge className={`text-xs ${artifact.statusColor}`}>
+                <Badge className={`text-xs ${artifact.statusColor} border-border/50`}>
                   {artifact.status}
                 </Badge>
                 {artifact.metadata && (
-                  <Badge className="text-xs bg-gray-700/50 text-gray-300">
+                  <Badge className="text-xs bg-muted/50 text-muted-foreground border-border/50">
                     {artifact.metadata}
                   </Badge>
                 )}
               </div>
             </Card>
           )) : (
-            <div className="text-xs text-gray-500 text-center py-4">
+            <div className="text-xs text-muted-foreground text-center py-4">
               Complete a task to see generated artifacts
             </div>
           )}
@@ -205,28 +205,28 @@ export default function RightPanel({ session, sources, logs, workflow }: RightPa
 
       {/* Agent Logs */}
       <div className="p-4">
-        <h4 className="text-sm font-medium mb-3">Agent Logs</h4>
+        <h4 className="text-sm font-medium mb-3 text-foreground">Agent Logs</h4>
         <ScrollArea className="max-h-64">
           <div className="space-y-2 text-xs">
             {logs.length === 0 ? (
-              <div className="text-gray-500 text-center py-4">
+              <div className="text-muted-foreground text-center py-4">
                 No logs available
               </div>
             ) : (
               logs.slice(0, 10).map((log) => (
                 <div key={log.id} className="flex items-start space-x-2">
-                  <span className="text-gray-500 font-mono flex-shrink-0">
+                  <span className="text-muted-foreground/70 font-mono flex-shrink-0">
                     {log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : '--:--:--'}
                   </span>
                   <span className={`flex-shrink-0 ${
-                    log.level === 'error' ? 'text-red-400' : 
+                    log.level === 'error' ? 'text-red-500' : 
                     log.level === 'info' ? 'text-primary' :
-                    log.level === 'debug' ? 'text-secondary' :
+                    log.level === 'debug' ? 'text-blue-500' :
                     'text-accent'
                   }`}>
                     {log.level.toUpperCase()}
                   </span>
-                  <span className="text-gray-300 flex-1 min-w-0 break-words">
+                  <span className="text-foreground flex-1 min-w-0 break-words">
                     {log.message}
                   </span>
                 </div>

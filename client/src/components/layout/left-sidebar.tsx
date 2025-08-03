@@ -67,10 +67,10 @@ export default function LeftSidebar({ selectedAgent, onAgentSelect, currentSessi
   ];
 
   return (
-    <aside className="w-64 bg-brevia-dark/60 backdrop-blur-xl border-r border-gray-800/50 p-4 overflow-y-auto">
+    <aside className="w-64 bg-card/60 backdrop-blur-xl border-r border-border p-4 overflow-y-auto gemini-glass">
       {/* Agent Selection */}
       <div className="mb-6">
-        <h3 className="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wide">
+        <h3 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
           AI Agents
         </h3>
         <div className="space-y-2">
@@ -81,18 +81,18 @@ export default function LeftSidebar({ selectedAgent, onAgentSelect, currentSessi
             return (
               <Card
                 key={agent.id}
-                className={`p-3 cursor-pointer transition-all hover:bg-gray-700/30 ${
-                  isSelected ? agent.bgColor : "bg-gray-800/30"
-                } ${isSelected ? "border-primary/20" : "border-gray-700/50"}`}
+                className={`p-3 cursor-pointer transition-all duration-200 hover:bg-muted/50 ${
+                  isSelected ? "bg-primary/10 border-primary/30 shadow-md" : "bg-muted/20 border-border/50"
+                } rounded-xl`}
                 onClick={() => onAgentSelect(agent.id)}
               >
                 <div className="flex items-center space-x-3">
-                  <div className={`w-8 h-8 ${isSelected ? 'bg-primary/20' : 'bg-gray-700/50'} rounded-lg flex items-center justify-center`}>
-                    <Icon className={`w-4 h-4 ${isSelected ? 'text-primary' : agent.color}`} />
+                  <div className={`w-8 h-8 ${isSelected ? 'bg-primary/20 shadow-sm' : 'bg-muted/50'} rounded-xl flex items-center justify-center transition-all`}>
+                    <Icon className={`w-4 h-4 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm truncate">{agent.name}</div>
-                    <div className="text-xs text-gray-400 truncate">{agent.description}</div>
+                    <div className="font-medium text-sm truncate text-foreground">{agent.name}</div>
+                    <div className="text-xs text-muted-foreground truncate">{agent.description}</div>
                   </div>
                 </div>
                 {agent.badges && (
@@ -103,8 +103,8 @@ export default function LeftSidebar({ selectedAgent, onAgentSelect, currentSessi
                         variant={badge === "Active" ? "default" : "secondary"}
                         className={`text-xs ${
                           badge === "Active" 
-                            ? "bg-primary/20 text-primary" 
-                            : "bg-gray-700/50 text-gray-300"
+                            ? "bg-primary/20 text-primary border-primary/30" 
+                            : "bg-muted/50 text-muted-foreground border-border/50"
                         }`}
                       >
                         {badge}
@@ -120,17 +120,17 @@ export default function LeftSidebar({ selectedAgent, onAgentSelect, currentSessi
 
       {/* Recent Sessions */}
       <div className="mb-6">
-        <h3 className="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wide">
+        <h3 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
           Recent Sessions
         </h3>
         <div className="space-y-2">
           {recentSessions.map((session, index) => (
             <Card 
               key={index}
-              className="p-2 bg-gray-800/30 cursor-pointer hover:bg-gray-700/30 transition-all border-gray-700/50"
+              className="p-3 bg-muted/20 cursor-pointer hover:bg-muted/40 transition-all border-border/50 rounded-xl"
             >
-              <div className="text-sm font-medium truncate">{session.title}</div>
-              <div className="text-xs text-gray-400">{session.time} • {session.type}</div>
+              <div className="text-sm font-medium truncate text-foreground">{session.title}</div>
+              <div className="text-xs text-muted-foreground">{session.time} • {session.type}</div>
             </Card>
           ))}
         </div>
@@ -138,20 +138,20 @@ export default function LeftSidebar({ selectedAgent, onAgentSelect, currentSessi
 
       {/* Active Models */}
       <div>
-        <h3 className="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wide">
+        <h3 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
           Active Models
         </h3>
         <div className="space-y-2">
           {activeModels.map((model, index) => (
             <div 
               key={index}
-              className="flex items-center justify-between p-2 bg-gray-800/30 rounded-lg border border-gray-700/50"
+              className="flex items-center justify-between p-3 bg-muted/20 rounded-xl border border-border/50"
             >
               <div className="flex items-center space-x-2">
                 <div className={`w-2 h-2 ${model.statusColor} rounded-full`} />
-                <span className="text-xs font-medium">{model.name}</span>
+                <span className="text-xs font-medium text-foreground">{model.name}</span>
               </div>
-              <span className="text-xs text-gray-400">{model.status}</span>
+              <span className="text-xs text-muted-foreground">{model.status}</span>
             </div>
           ))}
         </div>

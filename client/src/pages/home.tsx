@@ -48,7 +48,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-brevia-dark text-gray-100 overflow-hidden">
+    <div className="min-h-screen bg-background text-foreground overflow-hidden">
       <TopNavbar 
         selectedAgent={selectedAgent}
         onAgentSelect={handleAgentSelect}
