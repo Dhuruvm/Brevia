@@ -1,0 +1,181 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(178, 100%, 37%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(195, 100%, 62%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --accent: hsl(267, 84%, 81%);
+  --accent-foreground: hsl(0, 0%, 100%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+  --radius: 0.5rem;
+  
+  /* Custom Brevia colors */
+  --brevia-dark: hsl(240, 10%, 11%);
+  --brevia-light: hsl(210, 40%, 98%);
+  --brevia-primary: hsl(178, 100%, 37%);
+  --brevia-secondary: hsl(195, 100%, 62%);
+  --brevia-accent: hsl(267, 84%, 81%);
+  --brevia-gray-800: hsl(240, 6%, 10%);
+  --brevia-gray-700: hsl(240, 5%, 15%);
+  --brevia-gray-600: hsl(240, 4%, 20%);
+  --brevia-gray-500: hsl(240, 3%, 40%);
+  --brevia-gray-400: hsl(240, 3%, 60%);
+  --brevia-gray-300: hsl(240, 2%, 80%);
+}
+
+.dark {
+  --background: hsl(240, 10%, 11%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 11%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 11%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(178, 100%, 37%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(195, 100%, 62%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --accent: hsl(267, 84%, 81%);
+  --accent-foreground: hsl(0, 0%, 100%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  html.dark {
+    background-color: hsl(240, 10%, 11%);
+  }
+}
+
+@layer components {
+  .brevia-gradient {
+    background: linear-gradient(135deg, var(--brevia-primary), var(--brevia-secondary), var(--brevia-accent));
+  }
+  
+  .brevia-glass {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .dark .brevia-glass {
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .brevia-glow {
+    box-shadow: 0 0 20px rgba(0, 191, 166, 0.3);
+  }
+  
+  .brevia-glow:hover {
+    box-shadow: 0 0 30px rgba(0, 191, 166, 0.5);
+  }
+}
+
+@layer utilities {
+  .animate-pulse-glow {
+    animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .animate-typing {
+    animation: typing 1.5s steps(20, end) infinite;
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 20px rgba(0, 191, 166, 0.3);
+  }
+  50% {
+    opacity: 0.8;
+    box-shadow: 0 0 30px rgba(0, 191, 166, 0.6);
+  }
+}
+
+@keyframes typing {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  0% {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Custom scrollbar for dark theme */
+.dark ::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: hsl(240, 6%, 10%);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(240, 4%, 20%);
+  border-radius: 3px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(240, 3%, 30%);
+}
