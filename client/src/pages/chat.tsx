@@ -80,10 +80,10 @@ export default function Chat() {
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border px-4 py-3">
+      <header className="border-b border-border px-4 py-3 bg-background">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Brevia AI</h1>
-          <Button variant="ghost" size="sm">
+          <h1 className="text-xl font-semibold text-foreground">Brevia AI</h1>
+          <Button variant="ghost" size="sm" className="hover:bg-accent">
             New Chat
           </Button>
         </div>
@@ -112,7 +112,7 @@ export default function Chat() {
                     <button
                       key={action.label}
                       onClick={() => handleQuickAction(action)}
-                      className="p-4 text-left border border-border rounded-lg hover:bg-accent/50 transition-colors group"
+                      className="p-4 text-left border border-border rounded-lg hover:bg-accent/50 transition-colors group bg-card"
                     >
                       <div className="flex items-start space-x-3">
                         <Icon className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors mt-0.5" />
@@ -167,13 +167,13 @@ export default function Chat() {
         </div>
 
         {/* Input Area */}
-        <div className="p-4 border-t border-border">
+        <div className="p-4 border-t border-border bg-background">
           <form onSubmit={handleSubmit} className="relative">
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Message Brevia AI..."
-              className="chatgpt-input min-h-[52px] max-h-32 pr-12 py-3 px-4 resize-none"
+              className="chatgpt-input min-h-[52px] max-h-32 pr-12 py-3 px-4 resize-none text-foreground placeholder:text-muted-foreground"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
