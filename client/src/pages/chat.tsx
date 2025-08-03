@@ -1,10 +1,13 @@
-import { useState } from "react";
-import { Send, Sparkles, Search, FileText, Code } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Send, Sparkles, Search, FileText, Code, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useChat } from "@/hooks/use-chat";
 import { cn } from "@/lib/utils";
-import type { Message } from "@shared/schema";
+import { useQuery } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
+import Sidebar from "@/components/chat/sidebar";
+import type { Message, ChatSession } from "@shared/schema";
 
 const QUICK_ACTIONS = [
   {
@@ -37,6 +40,7 @@ export default function Chat() {
   const [input, setInput] = useState("");
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   
   const { 
     currentSession, 
@@ -44,6 +48,12 @@ export default function Chat() {
     createSession, 
     sendMessage 
   } = useChat(currentSessionId);
+
+  // Fetch all sessions
+  const { data: sessions = [] } = useQuery<ChatSession[]>({
+    queryKey: ["/api/sessions"],
+    refetchInterval: 5000, // Refresh every 5 seconds
+  });
 
   const handleSendMessage = async (content: string) => {
     if (!content.trim()) return;
@@ -77,23 +87,91 @@ export default function Chat() {
     handleSendMessage(input);
   };
 
-  return (
-    <div className="flex flex-col h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border px-4 py-3 bg-background">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-foreground">Brevia AI</h1>
-          <Button variant="ghost" size="sm" className="hover:bg-accent">
-            New Chat
-          </Button>
-        </div>
-      </header>
+  const handleNewChat = async () => {
+    const session = await createSession("research", "New Chat");
+    if (session) {
+      setCurrentSessionId(session.id);
+      setSidebarOpen(false);
+    }
+  };
 
-      {/* Chat Container */}
-      <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full">
-        {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          {messages.length === 0 ? (
+  const handleSessionSelect = (sessionId: string) => {
+    setCurrentSessionId(sessionId);
+    setSidebarOpen(false);
+  };
+
+  const handleDeleteSession = async (sessionId: string) => {
+    try {
+      // For now, just refresh the sessions
+      queryClient.invalidateQueries({ queryKey: ["/api/sessions"] });
+      
+      if (currentSessionId === sessionId) {
+        setCurrentSessionId(null);
+      }
+    } catch (error) {
+      console.error("Failed to delete session:", error);
+    }
+  };
+
+  // Close sidebar when clicking outside on mobile
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setSidebarOpen(false);
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return (
+    <div className="flex h-screen bg-background">
+      {/* Sidebar */}
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        sessions={sessions}
+        currentSessionId={currentSessionId}
+        onSessionSelect={handleSessionSelect}
+        onNewChat={handleNewChat}
+        onDeleteSession={handleDeleteSession}
+      />
+
+      {/* Main Content */}
+      <div className="flex flex-col flex-1 min-w-0">
+        {/* Header */}
+        <header className="border-b border-border px-4 py-3 bg-background">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="md:hidden hover:bg-accent"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <Menu className="w-4 h-4" />
+              </Button>
+              <h1 className="text-xl font-semibold text-foreground">
+                {currentSession?.title || "Brevia AI"}
+              </h1>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="hover:bg-accent"
+              onClick={handleNewChat}
+            >
+              New Chat
+            </Button>
+          </div>
+        </header>
+
+        {/* Chat Container */}
+        <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full">
+          {/* Messages Area */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-6">
+            {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center space-y-8">
               <div className="space-y-4">
                 <h2 className="text-3xl font-semibold text-foreground">
@@ -163,12 +241,12 @@ export default function Chat() {
                 </div>
               )}
             </div>
-          )}
-        </div>
+            )}
+          </div>
 
-        {/* Input Area */}
-        <div className="p-4 border-t border-border bg-background">
-          <form onSubmit={handleSubmit} className="relative">
+          {/* Input Area */}
+          <div className="p-4 border-t border-border bg-background">
+            <form onSubmit={handleSubmit} className="relative">
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -189,10 +267,11 @@ export default function Chat() {
             >
               <Send className="w-4 h-4" />
             </Button>
-          </form>
-          
-          <div className="text-xs text-muted-foreground text-center mt-2">
-            Brevia AI can make mistakes. Check important info.
+            </form>
+            
+            <div className="text-xs text-muted-foreground text-center mt-2">
+              Brevia AI can make mistakes. Check important info.
+            </div>
           </div>
         </div>
       </div>
