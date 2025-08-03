@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Paperclip, Mic, Send, Search, FileText } from "lucide-react";
+import { Paperclip, Mic, Send, Search, FileText, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -94,12 +94,12 @@ export default function InputBar({ onSendMessage, isProcessing, selectedAgent }:
   };
 
   return (
-    <div className="p-6 bg-brevia-dark/60 backdrop-blur-xl border-t border-gray-800/50">
+    <div className="p-3 md:p-6 bg-card/95 backdrop-blur-xl border-t border-border gemini-glass">
       <div className="max-w-4xl mx-auto">
         <div className="relative">
           {/* Slash Command Suggestions */}
           {showSuggestions && (
-            <Card className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800/95 backdrop-blur-xl border-gray-700/50 p-2">
+            <Card className="absolute bottom-full left-0 right-0 mb-2 bg-card/95 backdrop-blur-xl border-border p-2 rounded-xl shadow-lg gemini-glass">
               <div className="space-y-1">
                 {slashCommands
                   .filter(cmd => cmd.command.toLowerCase().includes(input.toLowerCase().slice(1)))
@@ -108,13 +108,13 @@ export default function InputBar({ onSendMessage, isProcessing, selectedAgent }:
                     return (
                       <div
                         key={cmd.command}
-                        className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-700/50 cursor-pointer"
+                        className="flex items-center space-x-3 p-2 rounded-xl hover:bg-muted/50 cursor-pointer transition-colors"
                         onClick={() => handleSuggestionClick(cmd.command)}
                       >
                         <Icon className={`w-4 h-4 ${cmd.color}`} />
                         <div>
-                          <div className="text-sm font-medium">{cmd.command}</div>
-                          <div className="text-xs text-gray-400">{cmd.description}</div>
+                          <div className="text-sm font-medium text-foreground">{cmd.command}</div>
+                          <div className="text-xs text-muted-foreground">{cmd.description}</div>
                         </div>
                       </div>
                     );
@@ -124,16 +124,16 @@ export default function InputBar({ onSendMessage, isProcessing, selectedAgent }:
           )}
 
           <form onSubmit={handleSubmit}>
-            <div className="flex items-center space-x-3 bg-gray-800/50 backdrop-blur-sm rounded-2xl p-4 border border-gray-700/50 focus-within:border-primary/50 transition-colors">
+            <div className="flex items-center space-x-2 md:space-x-3 bg-background/50 backdrop-blur-sm rounded-2xl p-3 md:p-4 border border-border focus-within:border-primary/50 transition-colors">
               {/* File Upload */}
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="p-2 rounded-lg hover:bg-gray-700/50"
+                className="p-2 rounded-xl hover:bg-muted/50 hidden md:flex"
                 title="Upload files"
               >
-                <Paperclip className="w-4 h-4 text-gray-400" />
+                <Paperclip className="w-4 h-4 text-muted-foreground" />
               </Button>
               
               {/* Input Field */}
@@ -143,7 +143,7 @@ export default function InputBar({ onSendMessage, isProcessing, selectedAgent }:
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 placeholder={getPlaceholder()}
-                className="flex-1 bg-transparent border-0 text-sm placeholder-gray-400 focus-visible:ring-0 focus-visible:ring-offset-0"
+                className="flex-1 bg-transparent border-0 text-sm md:text-base placeholder-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 text-foreground"
                 disabled={isProcessing}
               />
               
@@ -152,19 +152,23 @@ export default function InputBar({ onSendMessage, isProcessing, selectedAgent }:
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="p-2 rounded-lg hover:bg-gray-700/50"
+                className="p-2 rounded-xl hover:bg-muted/50"
                 title="Voice input"
               >
-                <Mic className="w-4 h-4 text-gray-400" />
+                <Mic className="w-4 h-4 text-muted-foreground" />
               </Button>
               
               {/* Send Button */}
               <Button
                 type="submit"
                 disabled={!input.trim() || isProcessing}
-                className="px-4 py-2 bg-gradient-to-r from-primary to-secondary rounded-lg text-white text-sm font-medium hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 md:px-4 py-2 gemini-button rounded-xl text-white text-sm font-medium hover:shadow-lg gemini-glow transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-muted/50"
               >
-                <Send className="w-3 h-3" />
+                {isProcessing ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Send className="w-3 h-3" />
+                )}
               </Button>
             </div>
           </form>

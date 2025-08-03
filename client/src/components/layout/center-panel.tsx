@@ -14,6 +14,8 @@ interface CenterPanelProps {
   messages: MessageType[];
   workflow: WorkflowType | null;
   onSendMessage: (content: string) => Promise<void>;
+  onToggleSidebar?: () => void;
+  onToggleRightPanel?: () => void;
 }
 
 export default function CenterPanel({ 
@@ -21,7 +23,9 @@ export default function CenterPanel({
   session, 
   messages, 
   workflow, 
-  onSendMessage 
+  onSendMessage,
+  onToggleSidebar,
+  onToggleRightPanel 
 }: CenterPanelProps) {
   const [isProcessing, setIsProcessing] = useState(false);
 

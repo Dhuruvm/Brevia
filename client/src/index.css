@@ -114,6 +114,19 @@
     background: linear-gradient(135deg, hsl(221, 83%, 58%), hsl(221, 83%, 63%));
     box-shadow: 0 4px 12px hsla(221, 83%, 53%, 0.3);
   }
+
+  /* Mobile optimizations */
+  @media (max-width: 768px) {
+    .gemini-glass {
+      backdrop-filter: blur(12px);
+    }
+  }
+
+  /* Touch target improvements */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }
 
 @layer utilities {

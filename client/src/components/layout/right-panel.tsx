@@ -1,4 +1,4 @@
-import { Download, FileText, FileImage, FileCode } from "lucide-react";
+import { Download, FileText, FileImage, FileCode, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,9 +11,10 @@ interface RightPanelProps {
   sources: Source[];
   logs: AgentLog[];
   workflow: AgentWorkflow | null;
+  onClose?: () => void;
 }
 
-export default function RightPanel({ session, sources, logs, workflow }: RightPanelProps) {
+export default function RightPanel({ session, sources, logs, workflow, onClose }: RightPanelProps) {
   const handleExport = async (format: string) => {
     if (!session) return;
     
@@ -91,9 +92,22 @@ export default function RightPanel({ session, sources, logs, workflow }: RightPa
   ];
 
   return (
-    <aside className="w-80 bg-card/60 backdrop-blur-xl border-l border-border overflow-y-auto gemini-glass">
-      {/* Results Header */}
-      <div className="p-4 border-b border-border">
+    <aside className="w-full h-full bg-card/60 backdrop-blur-xl border-l border-border overflow-y-auto gemini-glass">
+      {/* Mobile Header with Close Button */}
+      <div className="flex items-center justify-between p-4 border-b border-border xl:hidden">
+        <h2 className="text-lg font-semibold text-foreground">Results & Outputs</h2>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="p-2 rounded-xl bg-muted/50 hover:bg-muted/70"
+          onClick={onClose}
+        >
+          <X className="w-4 h-4 text-muted-foreground" />
+        </Button>
+      </div>
+
+      {/* Desktop Results Header */}
+      <div className="hidden xl:block p-4 border-b border-border">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-medium text-foreground">Results & Outputs</h3>
           <Button

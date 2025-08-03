@@ -10,6 +10,8 @@ import type { AgentType } from "@shared/schema";
 export default function Home() {
   const [selectedAgent, setSelectedAgent] = useState<AgentType>("research");
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+  const [showMobileRightPanel, setShowMobileRightPanel] = useState(false);
   
   const { agents } = useAgents();
   const { 
@@ -52,29 +54,66 @@ export default function Home() {
       <TopNavbar 
         selectedAgent={selectedAgent}
         onAgentSelect={handleAgentSelect}
+        onToggleSidebar={() => setShowMobileSidebar(!showMobileSidebar)}
+        onToggleRightPanel={() => setShowMobileRightPanel(!showMobileRightPanel)}
       />
       
-      <div className="flex h-[calc(100vh-73px)]">
-        <LeftSidebar 
-          selectedAgent={selectedAgent}
-          onAgentSelect={handleAgentSelect}
-          currentSession={currentSession}
-        />
+      <div className="flex h-[calc(100vh-73px)] relative">
+        {/* Mobile/Tablet - Left Sidebar */}
+        <div className={`
+          fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0
+          ${showMobileSidebar ? 'translate-x-0' : '-translate-x-full'}
+        `}>
+          <LeftSidebar 
+            selectedAgent={selectedAgent}
+            onAgentSelect={handleAgentSelect}
+            currentSession={currentSession}
+            onClose={() => setShowMobileSidebar(false)}
+          />
+        </div>
+
+        {/* Mobile Overlay */}
+        {showMobileSidebar && (
+          <div 
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+            onClick={() => setShowMobileSidebar(false)}
+          />
+        )}
         
-        <CenterPanel
-          selectedAgent={selectedAgent}
-          session={currentSession}
-          messages={messages}
-          workflow={workflow}
-          onSendMessage={handleSendMessage}
-        />
+        {/* Center Panel - Always visible */}
+        <div className="flex-1 flex flex-col min-w-0">
+          <CenterPanel
+            selectedAgent={selectedAgent}
+            session={currentSession}
+            messages={messages}
+            workflow={workflow}
+            onSendMessage={handleSendMessage}
+            onToggleSidebar={() => setShowMobileSidebar(!showMobileSidebar)}
+            onToggleRightPanel={() => setShowMobileRightPanel(!showMobileRightPanel)}
+          />
+        </div>
         
-        <RightPanel
-          session={currentSession}
-          sources={sources}
-          logs={logs}
-          workflow={workflow}
-        />
+        {/* Mobile/Tablet - Right Panel */}
+        <div className={`
+          fixed inset-y-0 right-0 z-50 w-80 transform transition-transform duration-300 ease-in-out xl:relative xl:translate-x-0
+          ${showMobileRightPanel ? 'translate-x-0' : 'translate-x-full'}
+        `}>
+          <RightPanel
+            session={currentSession}
+            sources={sources}
+            logs={logs}
+            workflow={workflow}
+            onClose={() => setShowMobileRightPanel(false)}
+          />
+        </div>
+
+        {/* Mobile Right Panel Overlay */}
+        {showMobileRightPanel && (
+          <div 
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm xl:hidden"
+            onClick={() => setShowMobileRightPanel(false)}
+          />
+        )}
       </div>
     </div>
   );

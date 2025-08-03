@@ -1,4 +1,4 @@
-import { Search, StickyNote, FileText, UserCheck, Presentation } from "lucide-react";
+import { Search, StickyNote, FileText, UserCheck, Presentation, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,9 +8,10 @@ interface LeftSidebarProps {
   selectedAgent: AgentType;
   onAgentSelect: (agent: AgentType) => void;
   currentSession: ChatSession | null;
+  onClose?: () => void;
 }
 
-export default function LeftSidebar({ selectedAgent, onAgentSelect, currentSession }: LeftSidebarProps) {
+export default function LeftSidebar({ selectedAgent, onAgentSelect, currentSession, onClose }: LeftSidebarProps) {
   const agents = [
     {
       id: "research" as AgentType,
@@ -67,10 +68,23 @@ export default function LeftSidebar({ selectedAgent, onAgentSelect, currentSessi
   ];
 
   return (
-    <aside className="w-64 bg-card/60 backdrop-blur-xl border-r border-border p-4 overflow-y-auto gemini-glass">
+    <aside className="w-full h-full bg-card/60 backdrop-blur-xl border-r border-border p-4 overflow-y-auto gemini-glass">
+      {/* Mobile Header with Close Button */}
+      <div className="flex items-center justify-between mb-6 lg:hidden">
+        <h2 className="text-lg font-semibold text-foreground">AI Agents</h2>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="p-2 rounded-xl bg-muted/50 hover:bg-muted/70"
+          onClick={onClose}
+        >
+          <X className="w-4 h-4 text-muted-foreground" />
+        </Button>
+      </div>
+
       {/* Agent Selection */}
       <div className="mb-6">
-        <h3 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
+        <h3 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide hidden lg:block">
           AI Agents
         </h3>
         <div className="space-y-2">
