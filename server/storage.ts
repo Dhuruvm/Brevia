@@ -1,10 +1,8 @@
-import { db } from './db';
-import { users, chatSessions, messages, workflows, documents, sources, agentLogs, knowledgeBase, agentMetrics, plugins } from "@shared/schema";
 import type { User, InsertUser, ChatSession, InsertChatSession, Message, InsertMessage, 
   Workflow, InsertWorkflow, Document, InsertDocument, Source, InsertSource, 
   AgentLog, InsertAgentLog, KnowledgeBase, InsertKnowledgeBase, 
   AgentMetrics, InsertAgentMetrics, Plugin, InsertPlugin } from "@shared/schema";
-import { eq, and, desc, asc } from "drizzle-orm";
+import { randomUUID } from "crypto";
 
 export interface IStorage {
   // User management
@@ -55,239 +53,316 @@ export interface IStorage {
   updatePlugin(pluginId: string, updates: Partial<Plugin>): Promise<Plugin>;
 }
 
-export class DatabaseStorage implements IStorage {
+export class MemoryStorage implements IStorage {
+  private users = new Map<string, User>();
+  private usersByUsername = new Map<string, User>();
+  private chatSessions = new Map<string, ChatSession>();
+  private messages = new Map<string, Message[]>();
+  private workflows = new Map<string, Workflow>();
+  private documents = new Map<string, Document[]>();
+  private sources = new Map<string, Source[]>();
+  private agentLogs = new Map<string, AgentLog[]>();
+  private knowledgeBase = new Map<string, KnowledgeBase>();
+  private agentMetrics = new Map<string, AgentMetrics[]>();
+  private plugins = new Map<string, Plugin>();
+
   // User management
   async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user || undefined;
+    return this.users.get(id);
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user || undefined;
+    return this.usersByUsername.get(username);
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(insertUser)
-      .returning();
+    const user: User = {
+      id: insertUser.id || randomUUID(),
+      username: insertUser.username,
+      email: insertUser.email || null,
+      preferences: insertUser.preferences || null,
+      createdAt: insertUser.createdAt || new Date()
+    };
+    this.users.set(user.id, user);
+    this.usersByUsername.set(user.username, user);
     return user;
   }
 
   // Session management
   async getChatSession(sessionId: string): Promise<ChatSession | undefined> {
-    const [session] = await db
-      .select()
-      .from(chatSessions)
-      .where(eq(chatSessions.id, sessionId));
-    return session || undefined;
+    return this.chatSessions.get(sessionId);
   }
 
   async getChatSessions(userId: string): Promise<ChatSession[]> {
-    try {
-      console.log('Fetching chat sessions for user:', userId);
-      const sessions = await db
-        .select()
-        .from(chatSessions)
-        .where(eq(chatSessions.userId, userId))
-        .orderBy(desc(chatSessions.updatedAt));
-      console.log('Found sessions:', sessions.length);
-      return sessions;
-    } catch (error) {
-      console.error('Error fetching chat sessions:', error);
-      // Return empty array if no sessions exist yet
-      return [];
-    }
+    const sessions = Array.from(this.chatSessions.values())
+      .filter(session => session.userId === userId)
+      .sort((a, b) => (b.updatedAt?.getTime() || 0) - (a.updatedAt?.getTime() || 0));
+    return sessions;
   }
 
   async createChatSession(insertSession: InsertChatSession): Promise<ChatSession> {
-    const [session] = await db
-      .insert(chatSessions)
-      .values(insertSession)
-      .returning();
+    const session: ChatSession = {
+      id: insertSession.id || randomUUID(),
+      userId: insertSession.userId || null,
+      title: insertSession.title,
+      agentType: insertSession.agentType,
+      context: insertSession.context || null,
+      createdAt: insertSession.createdAt || new Date(),
+      updatedAt: insertSession.updatedAt || new Date()
+    };
+    this.chatSessions.set(session.id, session);
     return session;
   }
 
   async updateChatSession(sessionId: string, updates: Partial<ChatSession>): Promise<ChatSession> {
-    const [session] = await db
-      .update(chatSessions)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(chatSessions.id, sessionId))
-      .returning();
-    return session;
+    const session = this.chatSessions.get(sessionId);
+    if (!session) {
+      throw new Error(`Chat session ${sessionId} not found`);
+    }
+    const updatedSession = { ...session, ...updates, updatedAt: new Date() };
+    this.chatSessions.set(sessionId, updatedSession);
+    return updatedSession;
   }
 
   // Message management
   async getMessages(sessionId: string): Promise<Message[]> {
-    return await db
-      .select()
-      .from(messages)
-      .where(eq(messages.sessionId, sessionId))
-      .orderBy(asc(messages.createdAt));
+    const sessionMessages = this.messages.get(sessionId) || [];
+    return sessionMessages.sort((a, b) => (a.createdAt?.getTime() || 0) - (b.createdAt?.getTime() || 0));
   }
 
   async createMessage(insertMessage: InsertMessage): Promise<Message> {
-    const [message] = await db
-      .insert(messages)
-      .values(insertMessage)
-      .returning();
+    const message: Message = {
+      id: insertMessage.id || randomUUID(),
+      sessionId: insertMessage.sessionId || null,
+      role: insertMessage.role,
+      content: insertMessage.content,
+      metadata: insertMessage.metadata || null,
+      createdAt: insertMessage.createdAt || new Date()
+    };
+
+    const sessionId = message.sessionId!;
+    const sessionMessages = this.messages.get(sessionId) || [];
+    sessionMessages.push(message);
+    this.messages.set(sessionId, sessionMessages);
     return message;
   }
 
   // Workflow management
   async getWorkflow(workflowId: string): Promise<Workflow | undefined> {
-    const [workflow] = await db
-      .select()
-      .from(workflows)
-      .where(eq(workflows.id, workflowId));
-    return workflow || undefined;
+    return this.workflows.get(workflowId);
   }
 
   async getWorkflows(sessionId: string): Promise<Workflow[]> {
-    return await db
-      .select()
-      .from(workflows)
-      .where(eq(workflows.sessionId, sessionId))
-      .orderBy(desc(workflows.startedAt));
+    return Array.from(this.workflows.values())
+      .filter(workflow => workflow.sessionId === sessionId)
+      .sort((a, b) => (b.startedAt?.getTime() || 0) - (a.startedAt?.getTime() || 0));
   }
 
   async createWorkflow(insertWorkflow: InsertWorkflow): Promise<Workflow> {
-    const [workflow] = await db
-      .insert(workflows)
-      .values(insertWorkflow)
-      .returning();
+    const workflow: Workflow = {
+      id: insertWorkflow.id || randomUUID(),
+      sessionId: insertWorkflow.sessionId || null,
+      agentType: insertWorkflow.agentType,
+      task: insertWorkflow.task,
+      status: insertWorkflow.status,
+      currentStep: insertWorkflow.currentStep || 0,
+      steps: insertWorkflow.steps,
+      result: insertWorkflow.result || null,
+      confidence: insertWorkflow.confidence || null,
+      startedAt: insertWorkflow.startedAt || new Date(),
+      completedAt: insertWorkflow.completedAt || null
+    };
+    this.workflows.set(workflow.id, workflow);
     return workflow;
   }
 
   async updateWorkflow(workflowId: string, updates: Partial<Workflow>): Promise<Workflow> {
-    const [workflow] = await db
-      .update(workflows)
-      .set(updates)
-      .where(eq(workflows.id, workflowId))
-      .returning();
-    return workflow;
+    const workflow = this.workflows.get(workflowId);
+    if (!workflow) {
+      throw new Error(`Workflow ${workflowId} not found`);
+    }
+    const updatedWorkflow = { ...workflow, ...updates };
+    this.workflows.set(workflowId, updatedWorkflow);
+    return updatedWorkflow;
   }
 
   // Document management
   async getDocuments(sessionId: string): Promise<Document[]> {
-    return await db
-      .select()
-      .from(documents)
-      .where(eq(documents.sessionId, sessionId))
-      .orderBy(desc(documents.createdAt));
+    const sessionDocuments = this.documents.get(sessionId) || [];
+    return sessionDocuments.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
   }
 
   async createDocument(insertDocument: InsertDocument): Promise<Document> {
-    const [document] = await db
-      .insert(documents)
-      .values(insertDocument)
-      .returning();
+    const document: Document = {
+      id: insertDocument.id || randomUUID(),
+      sessionId: insertDocument.sessionId || null,
+      workflowId: insertDocument.workflowId || null,
+      type: insertDocument.type,
+      title: insertDocument.title,
+      content: insertDocument.content,
+      format: insertDocument.format,
+      structure: insertDocument.structure || null,
+      metadata: insertDocument.metadata || null,
+      quality_score: insertDocument.quality_score || null,
+      createdAt: insertDocument.createdAt || new Date()
+    };
+
+    const sessionId = document.sessionId!;
+    const sessionDocuments = this.documents.get(sessionId) || [];
+    sessionDocuments.push(document);
+    this.documents.set(sessionId, sessionDocuments);
     return document;
   }
 
   // Source management
   async getSources(workflowId: string): Promise<Source[]> {
-    return await db
-      .select()
-      .from(sources)
-      .where(eq(sources.workflowId, workflowId))
-      .orderBy(desc(sources.createdAt));
+    const workflowSources = this.sources.get(workflowId) || [];
+    return workflowSources.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
   }
 
   async createSource(insertSource: InsertSource): Promise<Source> {
-    const [source] = await db
-      .insert(sources)
-      .values(insertSource)
-      .returning();
+    const source: Source = {
+      id: insertSource.id || randomUUID(),
+      workflowId: insertSource.workflowId || null,
+      type: insertSource.type,
+      url: insertSource.url || null,
+      title: insertSource.title || null,
+      content: insertSource.content || null,
+      summary: insertSource.summary || null,
+      embedding: insertSource.embedding || null,
+      credibility_score: insertSource.credibility_score || null,
+      relevance_score: insertSource.relevance_score || null,
+      metadata: insertSource.metadata || null,
+      createdAt: insertSource.createdAt || new Date()
+    };
+
+    const workflowId = source.workflowId!;
+    const workflowSources = this.sources.get(workflowId) || [];
+    workflowSources.push(source);
+    this.sources.set(workflowId, workflowSources);
     return source;
   }
 
   // Agent logs
   async getAgentLogs(workflowId: string): Promise<AgentLog[]> {
-    return await db
-      .select()
-      .from(agentLogs)
-      .where(eq(agentLogs.workflowId, workflowId))
-      .orderBy(asc(agentLogs.timestamp));
+    const workflowLogs = this.agentLogs.get(workflowId) || [];
+    return workflowLogs.sort((a, b) => (a.timestamp?.getTime() || 0) - (b.timestamp?.getTime() || 0));
   }
 
   async createAgentLog(insertLog: InsertAgentLog): Promise<AgentLog> {
-    const [log] = await db
-      .insert(agentLogs)
-      .values(insertLog)
-      .returning();
+    const log: AgentLog = {
+      id: insertLog.id || randomUUID(),
+      workflowId: insertLog.workflowId || null,
+      agentType: insertLog.agentType,
+      step: insertLog.step,
+      input: insertLog.input || null,
+      output: insertLog.output || null,
+      model_used: insertLog.model_used || null,
+      tokens_used: insertLog.tokens_used || null,
+      duration: insertLog.duration || null,
+      success: insertLog.success,
+      error: insertLog.error || null,
+      timestamp: insertLog.timestamp || new Date()
+    };
+
+    const workflowId = log.workflowId!;
+    const workflowLogs = this.agentLogs.get(workflowId) || [];
+    workflowLogs.push(log);
+    this.agentLogs.set(workflowId, workflowLogs);
     return log;
   }
 
   // Knowledge base
   async searchKnowledge(query: string, limit: number = 10): Promise<KnowledgeBase[]> {
-    // Simple text search for now - can be enhanced with vector search later
-    return await db
-      .select()
-      .from(knowledgeBase)
-      .where(eq(knowledgeBase.topic, query))
-      .limit(limit)
-      .orderBy(desc(knowledgeBase.last_used));
+    const results = Array.from(this.knowledgeBase.values())
+      .filter(kb => kb.topic.toLowerCase().includes(query.toLowerCase()))
+      .sort((a, b) => (b.last_used?.getTime() || 0) - (a.last_used?.getTime() || 0))
+      .slice(0, limit);
+    return results;
   }
 
   async createKnowledge(insertKnowledge: InsertKnowledgeBase): Promise<KnowledgeBase> {
-    const [knowledge] = await db
-      .insert(knowledgeBase)
-      .values(insertKnowledge)
-      .returning();
+    const knowledge: KnowledgeBase = {
+      id: insertKnowledge.id || randomUUID(),
+      topic: insertKnowledge.topic,
+      content: insertKnowledge.content,
+      embedding: insertKnowledge.embedding || null,
+      source_type: insertKnowledge.source_type || null,
+      confidence: insertKnowledge.confidence || null,
+      usage_count: insertKnowledge.usage_count || 0,
+      last_used: insertKnowledge.last_used || null,
+      tags: insertKnowledge.tags || null,
+      metadata: insertKnowledge.metadata || null,
+      createdAt: insertKnowledge.createdAt || new Date(),
+      updatedAt: insertKnowledge.updatedAt || new Date()
+    };
+    this.knowledgeBase.set(knowledge.id, knowledge);
     return knowledge;
   }
 
   // Agent metrics
   async getAgentMetrics(agentType: string): Promise<AgentMetrics[]> {
-    return await db
-      .select()
-      .from(agentMetrics)
-      .where(eq(agentMetrics.agentType, agentType))
-      .orderBy(desc(agentMetrics.createdAt));
+    const typeMetrics = this.agentMetrics.get(agentType) || [];
+    return typeMetrics.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
   }
 
   async createAgentMetrics(insertMetrics: InsertAgentMetrics): Promise<AgentMetrics> {
-    const [metrics] = await db
-      .insert(agentMetrics)
-      .values(insertMetrics)
-      .returning();
+    const metrics: AgentMetrics = {
+      id: insertMetrics.id || randomUUID(),
+      agentType: insertMetrics.agentType,
+      task_type: insertMetrics.task_type || null,
+      success_rate: insertMetrics.success_rate || null,
+      avg_duration: insertMetrics.avg_duration || null,
+      user_satisfaction: insertMetrics.user_satisfaction || null,
+      model_performance: insertMetrics.model_performance || null,
+      improvement_suggestions: insertMetrics.improvement_suggestions || null,
+      period_start: insertMetrics.period_start || null,
+      period_end: insertMetrics.period_end || null,
+      createdAt: insertMetrics.createdAt || new Date()
+    };
+
+    const agentType = metrics.agentType;
+    const typeMetrics = this.agentMetrics.get(agentType) || [];
+    typeMetrics.push(metrics);
+    this.agentMetrics.set(agentType, typeMetrics);
     return metrics;
   }
 
   // Plugin management
   async getPlugins(): Promise<Plugin[]> {
-    return await db
-      .select()
-      .from(plugins)
-      .orderBy(asc(plugins.name));
+    return Array.from(this.plugins.values()).sort((a, b) => a.name.localeCompare(b.name));
   }
 
   async getPlugin(name: string): Promise<Plugin | undefined> {
-    const [plugin] = await db
-      .select()
-      .from(plugins)
-      .where(eq(plugins.name, name));
-    return plugin || undefined;
+    return Array.from(this.plugins.values()).find(plugin => plugin.name === name);
   }
 
   async createPlugin(insertPlugin: InsertPlugin): Promise<Plugin> {
-    const [plugin] = await db
-      .insert(plugins)
-      .values(insertPlugin)
-      .returning();
+    const plugin: Plugin = {
+      id: insertPlugin.id || randomUUID(),
+      name: insertPlugin.name,
+      type: insertPlugin.type,
+      provider: insertPlugin.provider || null,
+      model_name: insertPlugin.model_name || null,
+      config: insertPlugin.config,
+      enabled: insertPlugin.enabled !== undefined ? insertPlugin.enabled : true,
+      performance_metrics: insertPlugin.performance_metrics || null,
+      createdAt: insertPlugin.createdAt || new Date(),
+      updatedAt: insertPlugin.updatedAt || new Date()
+    };
+    this.plugins.set(plugin.id, plugin);
     return plugin;
   }
 
   async updatePlugin(pluginId: string, updates: Partial<Plugin>): Promise<Plugin> {
-    const [plugin] = await db
-      .update(plugins)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(plugins.id, pluginId))
-      .returning();
-    return plugin;
+    const plugin = this.plugins.get(pluginId);
+    if (!plugin) {
+      throw new Error(`Plugin ${pluginId} not found`);
+    }
+    const updatedPlugin = { ...plugin, ...updates, updatedAt: new Date() };
+    this.plugins.set(pluginId, updatedPlugin);
+    return updatedPlugin;
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = new MemoryStorage();

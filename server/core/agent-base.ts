@@ -1,7 +1,5 @@
-import { db } from '../db';
-import { workflows, agentLogs, sources, documents, knowledgeBase } from '@shared/schema';
+import { storage } from '../storage';
 import type { Workflow, AgentLog, Source, Document, KnowledgeBase } from '@shared/schema';
-import { eq } from 'drizzle-orm';
 
 export interface AgentConfig {
   id: string;
@@ -152,28 +150,24 @@ export abstract class BaseAgent {
 
   // Workflow management methods
   protected async updateWorkflowSteps() {
-    await db.update(workflows)
-      .set({
-        steps: this.steps,
-        currentStep: this.steps.findIndex(s => s.status === 'running') || 0
-      })
-      .where(eq(workflows.id, this.workflowId));
+    await storage.updateWorkflow(this.workflowId, {
+      steps: this.steps,
+      currentStep: this.steps.findIndex(s => s.status === 'running') || 0
+    });
   }
 
   protected async completeWorkflow(result: AgentResult) {
-    await db.update(workflows)
-      .set({
-        status: result.success ? 'completed' : 'failed',
-        result: result,
-        confidence: result.metadata.confidence,
-        completedAt: new Date()
-      })
-      .where(eq(workflows.id, this.workflowId));
+    await storage.updateWorkflow(this.workflowId, {
+      status: result.success ? 'completed' : 'failed',
+      result: result,
+      confidence: result.metadata.confidence,
+      completedAt: new Date()
+    });
   }
 
   // Logging methods
   protected async logStep(step: AgentStep, status: string, error: string | null, output: any) {
-    await db.insert(agentLogs).values({
+    await storage.createAgentLog({
       workflowId: this.workflowId,
       agentType: this.config.type,
       step: step.name,
@@ -197,26 +191,26 @@ export abstract class BaseAgent {
   }
 
   protected async storeSource(source: Omit<Source, 'id' | 'createdAt'>) {
-    const [storedSource] = await db.insert(sources).values({
+    const storedSource = await storage.createSource({
       ...source,
       workflowId: this.workflowId
-    }).returning();
+    });
     return storedSource;
   }
 
   protected async storeDocument(doc: Omit<Document, 'id' | 'createdAt'>) {
-    const [storedDoc] = await db.insert(documents).values({
+    const storedDoc = await storage.createDocument({
       ...doc,
       sessionId: this.sessionId,
       workflowId: this.workflowId
-    }).returning();
+    });
     return storedDoc;
   }
 
   protected async storeKnowledge(knowledge: Omit<KnowledgeBase, 'id' | 'createdAt' | 'updatedAt'>) {
-    const [storedKnowledge] = await db.insert(knowledgeBase).values({
+    const storedKnowledge = await storage.createKnowledge({
       ...knowledge
-    }).returning();
+    });
     return storedKnowledge;
   }
 
