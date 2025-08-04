@@ -30,10 +30,11 @@ UI/UX Preferences: ChatGPT-like clean and professional design with simplified in
 - **Storage Layer**: Interface-based storage abstraction for flexible data access
 
 ### Database Architecture
-- **Database**: PostgreSQL with Drizzle ORM
-- **Schema Design**: Normalized tables for users, chat sessions, messages, workflows, documents, sources, and logs
-- **Data Types**: JSONB for flexible metadata storage and workflow steps
-- **Relationships**: Foreign key constraints linking sessions to users, messages to sessions, etc.
+- **Storage**: In-memory storage using Maps for development (migrated from PostgreSQL for Replit compatibility)
+- **Schema Design**: Maintains same data structure as PostgreSQL schema with normalized collections
+- **Data Types**: JSONB-compatible objects for flexible metadata storage and workflow steps
+- **Relationships**: Maintained through foreign key references in memory storage
+- **Migration**: Successfully migrated from database-dependent to in-memory storage on 2025-08-04
 
 ### AI Integration
 - **Primary Provider**: Hugging Face Inference API for text generation and embeddings
@@ -50,6 +51,16 @@ UI/UX Preferences: ChatGPT-like clean and professional design with simplified in
 - **Polling**: Client-side polling for workflow updates and message synchronization
 - **Progress Tracking**: Real-time agent workflow status with step-by-step progress
 - **Status Indicators**: Visual feedback for agent states and processing status
+
+## Recent Changes
+
+### Migration to Standard Replit Environment (2025-08-04)
+- Successfully migrated from Replit Agent environment to standard Replit
+- Replaced PostgreSQL database with in-memory storage system for better compatibility
+- Updated all database operations to use storage interface instead of direct SQL queries
+- Fixed TypeScript type issues in chat interface components
+- Application now runs cleanly without external database dependencies
+- All core functionality preserved: chat, agents, workflows, document generation
 
 ## External Dependencies
 

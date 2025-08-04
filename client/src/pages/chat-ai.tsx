@@ -29,6 +29,26 @@ interface SimpleMessage {
   createdAt: string;
 }
 
+interface WorkflowData {
+  id: string;
+  sessionId?: string;
+  session?: { id: string };
+  agentType: string;
+  task?: string;
+  status: string;
+  currentStep?: number;
+  steps?: any[];
+}
+
+interface DocumentData {
+  id: string;
+  type: string;
+  title: string;
+  format: string;
+  createdAt: string;
+  quality_score?: number;
+}
+
 export default function ChatAI() {
   const [, navigate] = useLocation();
   const [sessionId, setSessionId] = useState<string>("");
@@ -52,26 +72,26 @@ export default function ChatAI() {
   }, []);
 
   // Fetch messages for current session
-  const { data: messages = [], refetch: refetchMessages } = useQuery({
+  const { data: messages = [], refetch: refetchMessages } = useQuery<SimpleMessage[]>({
     queryKey: ['/api/sessions', sessionId, 'messages'],
     enabled: !!sessionId,
     refetchInterval: 2000
   });
 
   // Fetch session details
-  const { data: session } = useQuery({
+  const { data: session } = useQuery<ChatSession>({
     queryKey: ['/api/sessions', sessionId],
     enabled: !!sessionId
   });
 
   // Fetch active workflows
-  const { data: activeWorkflows = [] } = useQuery({
+  const { data: activeWorkflows = [] } = useQuery<WorkflowData[]>({
     queryKey: ['/api/workflows/active'],
     refetchInterval: 3000
   });
 
   // Fetch documents for current session
-  const { data: documents = [] } = useQuery({
+  const { data: documents = [] } = useQuery<DocumentData[]>({
     queryKey: ['/api/sessions', sessionId, 'documents'],
     enabled: !!sessionId
   });
@@ -103,9 +123,9 @@ export default function ChatAI() {
       });
       return result;
     },
-    onSuccess: (result) => {
+    onSuccess: (result: any) => {
       setMessage("");
-      setDetectedAgentType(result.agentType);
+      setDetectedAgentType(result.agentType || '');
       refetchMessages();
       queryClient.invalidateQueries({ queryKey: ['/api/workflows'] });
       queryClient.invalidateQueries({ queryKey: ['/api/sessions', sessionId, 'documents'] });
@@ -136,14 +156,16 @@ export default function ChatAI() {
     sendMessageMutation.mutate(message);
   };
 
-  const agentTypeDisplay = detectedAgentType || session?.agentType || 'AI';
-  const agentConfig = AGENT_CONFIGS[agentTypeDisplay] || {
+  const agentTypeDisplay = detectedAgentType || session?.agentType || 'research';
+  const agentConfig = AGENT_CONFIGS[agentTypeDisplay as keyof typeof AGENT_CONFIGS] || {
     name: 'AI Agent',
     icon: '🤖',
-    color: 'blue'
+    color: 'blue',
+    description: 'AI Assistant',
+    capabilities: []
   };
 
-  const currentActiveWorkflow = activeWorkflows.find(w => 
+  const currentActiveWorkflow = activeWorkflows.find((w: WorkflowData) => 
     w.session?.id === sessionId || w.sessionId === sessionId
   );
 
@@ -230,7 +252,7 @@ export default function ChatAI() {
         <div className="flex-1">
           <ScrollArea className="h-full p-4">
             <div className="space-y-4 max-w-4xl mx-auto">
-              {messages.length === 0 && (
+              {Array.isArray(messages) && messages.length === 0 && (
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">🤖</div>
                   <h2 className="text-2xl font-bold mb-2">Welcome to Brevia AI</h2>
@@ -251,7 +273,7 @@ export default function ChatAI() {
                 </div>
               )}
 
-              {messages.map((msg: SimpleMessage) => (
+              {Array.isArray(messages) && messages.map((msg: SimpleMessage) => (
                 <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[80%] rounded-lg p-3 ${
                     msg.role === 'user' 
@@ -293,7 +315,7 @@ export default function ChatAI() {
         </div>
 
         {/* Documents Sidebar - Desktop only */}
-        {!isMobile && documents.length > 0 && (
+        {!isMobile && Array.isArray(documents) && documents.length > 0 && (
           <div className="w-80 border-l bg-card">
             <div className="p-4 border-b">
               <h3 className="font-medium flex items-center gap-2">
@@ -303,7 +325,7 @@ export default function ChatAI() {
             </div>
             <ScrollArea className="h-full">
               <div className="p-4 space-y-3">
-                {documents.map((doc: any) => (
+                {Array.isArray(documents) && documents.map((doc: DocumentData) => (
                   <Card key={doc.id} className="p-3">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-lg">
