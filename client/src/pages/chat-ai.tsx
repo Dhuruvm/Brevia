@@ -10,8 +10,11 @@ import { Progress } from "@/components/ui/progress";
 import { useMobile } from "@/hooks/use-mobile";
 import { queryClient } from "@/lib/queryClient";
 import { AgentService, AGENT_CONFIGS } from "@/lib/ai-agents";
-import { Send, Bot, FileText, Loader2, ChevronLeft, Sparkles, Activity } from "lucide-react";
+import { Send, Bot, FileText, Loader2, ChevronLeft, Sparkles, Activity, MessageSquare, Zap } from "lucide-react";
 import type { Message } from "@shared/schema";
+import { AgentMessage } from "@/components/chat/agent-message";
+import { MessageCounter } from "@/components/chat/message-counter";
+import { WorkflowAnimation } from "@/components/chat/workflow-animation";
 
 interface ChatSession {
   id: string;
@@ -54,6 +57,8 @@ export default function ChatAI() {
   const [sessionId, setSessionId] = useState<string>("");
   const [message, setMessage] = useState("");
   const [detectedAgentType, setDetectedAgentType] = useState<string>("");
+  const [isHeaderExpanded, setIsHeaderExpanded] = useState(false);
+  const [actionCount, setActionCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useMobile();
 
@@ -150,6 +155,14 @@ export default function ChatAI() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Update action count based on workflows and agent activities
+  useEffect(() => {
+    const count = messages.filter(m => m.role === 'assistant').length + 
+                  activeWorkflows.length + 
+                  documents.length;
+    setActionCount(count);
+  }, [messages, activeWorkflows, documents]);
+
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim() || !sessionId || sendMessageMutation.isPending) return;
@@ -182,46 +195,57 @@ export default function ChatAI() {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b bg-card">
-        {isMobile && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/')}
-            className="mr-2"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-        )}
-        
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">{agentConfig.icon}</span>
-            <h1 className="font-semibold">{agentConfig.name}</h1>
-          </div>
-          {detectedAgentType && (
-            <Badge variant="secondary" className="text-xs">
-              Auto-detected
-            </Badge>
+      {/* Header with Message Counter */}
+      <div className="border-b bg-card">
+        <div className="flex items-center justify-between p-4">
+          {isMobile && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/')}
+              className="mr-2"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
           )}
+          
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">{agentConfig.icon}</span>
+              <h1 className="font-semibold">{agentConfig.name}</h1>
+            </div>
+            {detectedAgentType && (
+              <Badge variant="secondary" className="text-xs">
+                Auto-detected
+              </Badge>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            {currentActiveWorkflow && (
+              <Badge variant="secondary" className="text-xs animate-pulse flex items-center gap-1">
+                <Activity className="h-3 w-3" />
+                Processing...
+              </Badge>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/')}
+            >
+              New Session
+            </Button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {currentActiveWorkflow && (
-            <Badge variant="secondary" className="text-xs animate-pulse flex items-center gap-1">
-              <Activity className="h-3 w-3" />
-              Processing...
-            </Badge>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/')}
-          >
-            New Session
-          </Button>
-        </div>
+        {/* Message Counter Header */}
+        <MessageCounter
+          messageCount={Array.isArray(messages) ? messages.length : 0}
+          actionCount={actionCount}
+          isExpanded={isHeaderExpanded}
+          onToggle={() => setIsHeaderExpanded(!isHeaderExpanded)}
+          subtitle={`Migration task in progress...`}
+        />
       </div>
 
       {/* Workflow Status */}
@@ -273,40 +297,44 @@ export default function ChatAI() {
                 </div>
               )}
 
-              {Array.isArray(messages) && messages.map((msg: SimpleMessage) => (
-                <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[80%] rounded-lg p-3 ${
-                    msg.role === 'user' 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'bg-muted'
-                  }`}>
-                    {msg.metadata?.error ? (
-                      <div className="text-red-500">{msg.content}</div>
-                    ) : (
-                      <div className="whitespace-pre-wrap">{msg.content}</div>
-                    )}
-                    
-                    {msg.metadata && !msg.metadata.error && (
-                      <div className="mt-2 text-xs opacity-70">
-                        {msg.metadata.agentType && (
-                          <Badge variant="outline" className="mr-2">
-                            {msg.metadata.agentType}
-                          </Badge>
-                        )}
-                        {msg.metadata.confidence && (
-                          <span>Confidence: {Math.round(msg.metadata.confidence * 100)}%</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
+              {Array.isArray(messages) && messages.map((msg: SimpleMessage, index) => (
+                <AgentMessage
+                  key={msg.id}
+                  message={msg}
+                  messageIndex={index}
+                  totalMessages={messages.length}
+                  actionCount={actionCount}
+                />
               ))}
               
               {sendMessageMutation.isPending && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>AI agent is working on your request...</span>
-                </div>
+                <WorkflowAnimation
+                  workflowId="temp-workflow"
+                  agentType={detectedAgentType || 'AI'}
+                  task={message}
+                  status="running"
+                  steps={[
+                    {
+                      id: 'analyze',
+                      name: 'Analyzing Request',
+                      description: 'Understanding your task requirements',
+                      status: 'running'
+                    },
+                    {
+                      id: 'detect',
+                      name: 'Detecting Agent Type',
+                      description: 'Choosing the best agent for your task',
+                      status: 'pending'
+                    },
+                    {
+                      id: 'execute',
+                      name: 'Executing Task',
+                      description: 'Processing your request',
+                      status: 'pending'
+                    }
+                  ]}
+                  currentStep={0}
+                />
               )}
               
               <div ref={messagesEndRef} />
