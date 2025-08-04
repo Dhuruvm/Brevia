@@ -4,14 +4,14 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
-import ChatAI from "@/pages/chat-ai";
+import ChatEnhanced from "@/pages/chat-enhanced";
 import Home from "@/pages/home";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/chat" component={ChatAI} />
+      <Route path="/chat" component={ChatEnhanced} />
       <Route component={NotFound} />
     </Switch>
   );

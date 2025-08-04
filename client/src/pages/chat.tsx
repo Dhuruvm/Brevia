@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Send, Sparkles, Search, FileText, Code, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -6,7 +6,11 @@ import { useChat } from "@/hooks/use-chat";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import Sidebar from "@/components/chat/sidebar";
+import EnhancedMessage from "@/components/chat/enhanced-message";
+import TypingIndicator from "@/components/ui/typing-indicator";
+import WorkflowDisplay from "@/components/chat/workflow-display";
 import type { Message, ChatSession } from "@shared/schema";
 
 const QUICK_ACTIONS = [
@@ -205,10 +209,92 @@ export default function Chat() {
               </div>
             </div>
           ) : (
-            <div className="space-y-6">
-              {messages.map((message: Message) => (
-                <div
+            <div className="space-y-0 divide-y divide-gray-100 dark:divide-gray-800">
+              {messages.map((message: Message, index) => (
+                <EnhancedMessage
                   key={message.id}
+                  message={message}
+                  isTyping={index === messages.length - 1 && isTyping}
+                  onCopy={(content) => {
+                    navigator.clipboard.writeText(content);
+                    // You can add a toast notification here
+                  }}
+                  onRegenerate={(messageId) => {
+                    console.log('Regenerate:', messageId);
+                    // Implement regeneration logic
+                  }}
+                  onLike={(messageId) => {
+                    console.log('Like:', messageId);
+                    // Implement like logic
+                  }}
+                  onDislike={(messageId) => {
+                    console.log('Dislike:', messageId);
+                    // Implement dislike logic
+                  }}
+                />
+              ))}
+              
+              {/* Show typing indicator when processing */}
+              {isTyping && (
+                <TypingIndicator 
+                  agentType={currentSession?.agentType || 'research'}
+                  currentStep="Processing your request"
+                />
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Input Area */}
+        <div className="border-t border-gray-200 dark:border-gray-700 bg-background">
+          <div className="max-w-4xl mx-auto p-4">
+            <div className="relative">
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Message Brevia AI..."
+                className="min-h-[60px] max-h-[200px] pr-12 resize-none rounded-2xl border border-gray-200 dark:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 transition-colors"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage(input);
+                  }
+                }}
+              />
+              <Button
+                onClick={() => handleSendMessage(input)}
+                disabled={!input.trim() || isTyping}
+                size="sm"
+                className="absolute bottom-2 right-2 h-8 w-8 rounded-full bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 text-white dark:text-black"
+              >
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            {/* Quick action buttons for input */}
+            <div className="flex flex-wrap gap-2 mt-3">
+              {QUICK_ACTIONS.map((action) => {
+                const Icon = action.icon;
+                return (
+                  <Button
+                    key={action.label}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleQuickAction(action)}
+                    className="text-xs h-7 rounded-full border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
+                  >
+                    <Icon className="w-3 h-3 mr-1" />
+                    {action.label}
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
                   className={cn(
                     "flex w-full",
                     message.role === "user" ? "justify-end" : "justify-start"

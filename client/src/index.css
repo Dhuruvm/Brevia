@@ -36,6 +36,14 @@
   --chatgpt-gray-700: hsl(0, 0%, 25%);
   --chatgpt-gray-800: hsl(0, 0%, 15%);
   --chatgpt-gray-900: hsl(0, 0%, 7%);
+  
+  /* User message background - light gray */
+  --user-message-bg: hsl(0, 0%, 96%);
+  --user-message-text: hsl(0, 0%, 15%);
+  
+  /* AI response background - white */
+  --ai-message-bg: hsl(0, 0%, 100%);
+  --ai-message-text: hsl(0, 0%, 15%);
 }
 
 .dark {
@@ -60,6 +68,12 @@
   --destructive-foreground: hsl(0, 0%, 100%);
   --ring: hsl(210, 100%, 50%);
   --radius: 0.5rem;
+  
+  /* Dark mode message colors */
+  --user-message-bg: hsl(0, 0%, 12%);
+  --user-message-text: hsl(0, 0%, 90%);
+  --ai-message-bg: hsl(0, 0%, 8%);
+  --ai-message-text: hsl(0, 0%, 90%);
 }
 
 @layer base {
@@ -73,13 +87,74 @@
   }
 
   /* Force dark mode */
-  html {
-    @apply dark;
-  }
+}
 
-  html.dark {
-    background-color: hsl(0, 0%, 0%);
+/* Typing animation styles */
+@keyframes typing {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes blink {
+  0%, 50% { border-color: transparent; }
+  51%, 100% { border-color: var(--foreground); }
+}
+
+.typing-animation {
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid;
+  animation: typing 2s steps(30) forwards, blink 1s infinite;
+}
+
+/* Smooth fade-in animation for messages */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-fade-in {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+/* Interactive button styles */
+.action-button {
+  @apply transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 
+         text-gray-400 hover:text-gray-600 dark:hover:text-gray-300
+         rounded-md p-1.5 opacity-0 group-hover:opacity-100;
+}
+
+.action-button:hover {
+  transform: scale(1.05);
+}
+
+/* Source link styling */
+.source-link {
+  @apply inline-flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800 
+         dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200
+         bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30
+         px-2 py-1 rounded-md border border-blue-200 dark:border-blue-800;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .action-button {
+    @apply opacity-100; /* Always show buttons on mobile */
+  }
+}
+
+html {
+  @apply dark;
+}
+
+html.dark {
+  background-color: hsl(0, 0%, 0%);
 }
 
 @layer components {
@@ -197,6 +272,21 @@
   .animate-slide-up {
     animation: slideUp 0.3s ease-out;
   }
+}
+
+/* Enhanced Message CSS Variables */
+:root {
+  --user-message-bg: #f7f7f8;
+  --user-message-text: #1f1f1f;
+  --ai-message-bg: #ffffff;
+  --ai-message-text: #1f1f1f;
+}
+
+.dark {
+  --user-message-bg: #2f2f2f;
+  --user-message-text: #ececec;
+  --ai-message-bg: #1a1a1a;
+  --ai-message-text: #ececec;
 }
 
 @keyframes pulse-glow {
