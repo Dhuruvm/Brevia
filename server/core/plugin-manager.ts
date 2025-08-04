@@ -132,6 +132,8 @@ export class PluginManager {
   }
 
   private async createHuggingFacePlugin(dbPlugin: Plugin): Promise<PluginInterface> {
+    // Use external plugin file for better organization
+    const { HuggingFacePlugin } = await import('../plugins/huggingface-plugin');
     return new HuggingFacePlugin(dbPlugin);
   }
 
