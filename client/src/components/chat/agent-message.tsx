@@ -93,7 +93,7 @@ export function AgentMessage({ message, messageIndex, totalMessages, actionCount
                     <Clock className="h-4 w-4 text-muted-foreground" />
                   )}
                   <span className="font-medium text-sm">
-                    {totalMessages} message{totalMessages !== 1 ? 's' : ''} & {actionCount} action{actionCount !== 1 ? 's' : ''}
+                    Agent Response
                   </span>
                 </div>
               </div>

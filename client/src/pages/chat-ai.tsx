@@ -322,7 +322,7 @@ export default function ChatAI() {
                   message={msg}
                   messageIndex={index}
                   totalMessages={messages.length}
-                  actionCount={actionCount}
+                  actionCount={0}
                 />
               ))}
 
