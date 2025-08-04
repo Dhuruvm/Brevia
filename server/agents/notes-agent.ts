@@ -227,12 +227,12 @@ Rank by importance (1-5 scale) and format as JSON:
     }
     
     // Fallback key point extraction
-    const sentences = contentData.content.split(/[.!?]+/).filter(s => s.trim().length > 10);
+    const sentences = contentData.content.split(/[.!?]+/).filter((s: string) => s.trim().length > 10);
     return {
       main_topics: [
         { topic: 'General Content', importance: 3, details: 'Content analysis' }
       ],
-      key_facts: sentences.slice(0, 3).map(s => ({ fact: s.trim(), importance: 3 })),
+      key_facts: sentences.slice(0, 3).map((s: string) => ({ fact: s.trim(), importance: 3 })),
       concepts: [],
       action_items: [],
       questions: [`What are the main implications of this content?`]
@@ -314,6 +314,8 @@ ${enhancedNotes.enhanced_content}
 
     // Store the notes as a document
     await this.storeDocument({
+      workflowId: this.workflowId,
+      sessionId: this.sessionId,
       type: 'note',
       title: `Notes - ${timestamp}`,
       content: finalNotes,

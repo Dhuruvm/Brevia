@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { agentOrchestrator } from "./core/agent-orchestrator";
 import { pluginManager } from "./core/plugin-manager";
 import { insertChatSessionSchema, insertMessageSchema } from "@shared/schema";
+import { validateSchema, sanitizeInput, errorHandler, auditLogger } from "./middleware/security";
 import { z } from "zod";
 
 // Request schemas
@@ -25,6 +26,10 @@ const executeAgentSchema = z.object({
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
+  // Apply security middleware to all routes
+  app.use(auditLogger);
+  app.use(sanitizeInput);
+  
   // Initialize orchestrator when routes are loaded
   agentOrchestrator.initialize().catch(console.error);
   
@@ -40,7 +45,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new chat session
-  app.post("/api/sessions", async (req, res) => {
+  app.post("/api/sessions", validateSchema(createSessionSchema), async (req, res) => {
     try {
       const data = createSessionSchema.parse(req.body);
       

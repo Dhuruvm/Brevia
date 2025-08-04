@@ -152,7 +152,7 @@ Format as JSON:
       const knowledge = await storage.searchKnowledge(strategy.topic, 3);
 
       for (const kb of knowledge) {
-        const source = await this.storeSource({
+        const source = this.createMockSource({
           type: 'knowledge',
           title: kb.topic,
           content: kb.content,
@@ -198,7 +198,7 @@ Format as JSON:
     const sources: Source[] = [];
 
     for (const mockData of mockSourcesData) {
-      const source = await this.storeSource({
+      const source = this.createMockSource({
         type: 'url',
         url: mockData.url,
         title: mockData.title,
@@ -338,7 +338,7 @@ ${sources.map(s => `- [${s.title}](${s.url || '#'})`).join('\n')}
 `;
   }
 
-  private async storeSource(sourceData: Omit<Source, 'id'>): Promise<Source> {
+  private createMockSource(sourceData: Omit<Source, 'id'>): Source {
     return {
       id: Date.now().toString(),
       type: sourceData.type,
