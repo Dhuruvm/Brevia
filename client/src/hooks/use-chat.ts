@@ -51,7 +51,11 @@ export function useChat(sessionId: string | null) {
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async ({ sessionId, content }: { sessionId: string; content: string }) => {
-      const response = await apiRequest("POST", "/api/chat", { sessionId, content });
+      const response = await apiRequest("POST", "/api/agents/execute", { 
+        sessionId, 
+        task: content,
+        agentType: "research"
+      });
       return response.json();
     },
     onSuccess: () => {
@@ -63,6 +67,10 @@ export function useChat(sessionId: string | null) {
       
       // Stop polling after 2 minutes (in case agent completes)
       setTimeout(() => setPollingEnabled(false), 120000);
+    },
+    onError: (error) => {
+      console.error("Error sending message:", error);
+      setPollingEnabled(false);
     },
   });
 

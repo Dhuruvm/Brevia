@@ -45,7 +45,7 @@ export default function Chat() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  
+
   const { 
     currentSession, 
     messages, 
@@ -61,9 +61,9 @@ export default function Chat() {
 
   const handleSendMessage = async (content: string) => {
     if (!content.trim()) return;
-    
+
     setIsTyping(true);
-    
+
     try {
       if (!currentSessionId) {
         const session = await createSession("research", "New Chat");
@@ -108,7 +108,7 @@ export default function Chat() {
     try {
       // For now, just refresh the sessions
       queryClient.invalidateQueries({ queryKey: ["/api/sessions"] });
-      
+
       if (currentSessionId === sessionId) {
         setCurrentSessionId(null);
       }
@@ -124,7 +124,7 @@ export default function Chat() {
         setSidebarOpen(false);
       }
     };
-    
+
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -185,7 +185,7 @@ export default function Chat() {
                   I can help with research, writing, analysis, and more. Choose a quick action or ask me anything.
                 </p>
               </div>
-              
+
               {/* Quick Actions */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl">
                 {QUICK_ACTIONS.map((action) => {
@@ -233,7 +233,7 @@ export default function Chat() {
                   }}
                 />
               ))}
-              
+
               {/* Show typing indicator when processing */}
               {isTyping && (
                 <TypingIndicator 
@@ -270,7 +270,7 @@ export default function Chat() {
                 <Send className="w-4 h-4" />
               </Button>
             </div>
-            
+
             {/* Quick action buttons for input */}
             <div className="flex flex-wrap gap-2 mt-3">
               {QUICK_ACTIONS.map((action) => {
@@ -288,75 +288,6 @@ export default function Chat() {
                   </Button>
                 );
               })}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-                  className={cn(
-                    "flex w-full",
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "max-w-[80%] rounded-2xl px-4 py-3",
-                      message.role === "user"
-                        ? "message-user text-foreground"
-                        : "message-assistant text-foreground"
-                    )}
-                  >
-                    <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                      {message.content}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              
-              {isTyping && (
-                <div className="flex justify-start">
-                  <div className="message-assistant rounded-2xl px-4 py-3">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-pulse"></div>
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-            )}
-          </div>
-
-          {/* Input Area */}
-          <div className="p-4 border-t border-border bg-background">
-            <form onSubmit={handleSubmit} className="relative">
-            <Textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Message Brevia AI..."
-              className="chatgpt-input min-h-[52px] max-h-32 pr-12 py-3 px-4 resize-none text-foreground placeholder:text-muted-foreground"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSubmit(e);
-                }
-              }}
-            />
-            <Button
-              type="submit"
-              size="sm"
-              disabled={!input.trim() || isTyping}
-              className="absolute right-2 bottom-2 h-8 w-8 p-0 chatgpt-button"
-            >
-              <Send className="w-4 h-4" />
-            </Button>
-            </form>
-            
-            <div className="text-xs text-muted-foreground text-center mt-2">
-              Brevia AI can make mistakes. Check important info.
             </div>
           </div>
         </div>
