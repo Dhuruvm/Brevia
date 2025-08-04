@@ -61,6 +61,62 @@ export function ResearchWorkflow({ query, isActive, onComplete }: ResearchWorkfl
     }
   }, [query, isActive]);
 
+  // Start autonomous research via API
+  const startAutonomousResearch = async (query: string) => {
+    try {
+      const response = await fetch('/api/research/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+      });
+      
+      if (response.ok) {
+        const { taskId } = await response.json();
+        // Poll for updates
+        pollResearchStatus(taskId);
+      }
+    } catch (error) {
+      console.error('Failed to start autonomous research:', error);
+    }
+  };
+
+  const pollResearchStatus = async (taskId: string) => {
+    const poll = async () => {
+      try {
+        const response = await fetch(`/api/research/${taskId}`);
+        if (response.ok) {
+          const task = await response.json();
+          updateStepsFromTask(task);
+          
+          if (task.status !== 'completed' && task.status !== 'failed') {
+            setTimeout(poll, 2000); // Poll every 2 seconds
+          }
+        }
+      } catch (error) {
+        console.error('Failed to poll research status:', error);
+      }
+    };
+    
+    poll();
+  };
+
+  const updateStepsFromTask = (task: any) => {
+    if (task.fetchTasks) {
+      const newSteps = task.fetchTasks.map((fetchTask: any, index: number) => ({
+        id: fetchTask.id,
+        name: `Fetch Task ${index + 1}`,
+        description: fetchTask.url,
+        status: fetchTask.status,
+        progress: fetchTask.status === 'completed' ? 100 : fetchTask.status === 'running' ? 50 : 0,
+        logs: [`Fetching: ${fetchTask.url}`, ...(fetchTask.response ? [`Status: ${fetchTask.response.status}`] : [])],
+        curlCommand: fetchTask.curlCommand,
+        response: fetchTask.response
+      }));
+      
+      setSteps(newSteps);
+    }
+  };
+
   const initializeResearch = () => {
     const researchSteps: ResearchStep[] = [
       {
@@ -109,8 +165,8 @@ export function ResearchWorkflow({ query, isActive, onComplete }: ResearchWorkfl
     setCurrentStep(0);
     setExpandedSteps(new Set(['parse-query']));
     
-    // Start the research process
-    startResearchProcess(researchSteps);
+    // Start autonomous research via API
+    startAutonomousResearch(query);
   };
 
   const startResearchProcess = async (initialSteps: ResearchStep[]) => {

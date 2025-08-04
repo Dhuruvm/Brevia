@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { agentOrchestrator } from "./core/agent-orchestrator";
 import { pluginManager } from "./core/plugin-manager";
+import { ResearchOrchestrator } from "./services/research-orchestrator";
 import { insertChatSessionSchema, insertMessageSchema } from "@shared/schema";
 import { validateSchema, sanitizeInput, errorHandler, auditLogger } from "./middleware/security";
 import { z } from "zod";
@@ -24,6 +25,10 @@ const executeAgentSchema = z.object({
   sessionId: z.string()
 });
 
+const startResearchSchema = z.object({
+  query: z.string().min(1)
+});
+
 export async function registerRoutes(app: Express): Promise<Server> {
   
   // Apply security middleware to all routes
@@ -32,6 +37,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Initialize orchestrator when routes are loaded
   agentOrchestrator.initialize().catch(console.error);
+  
+  // Initialize research orchestrator
+  const researchOrchestrator = new ResearchOrchestrator();
   
   // Get chat sessions for user (mock user for now)
   app.get("/api/sessions", async (req, res) => {
@@ -281,16 +289,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Start autonomous research
+  app.post("/api/research/start", validateSchema(startResearchSchema), async (req, res) => {
+    try {
+      const { query } = req.body;
+      const taskId = await researchOrchestrator.startResearch(query);
+      res.json({ taskId, status: 'started' });
+    } catch (error) {
+      console.error("Error starting research:", error);
+      res.status(500).json({ error: "Failed to start research" });
+    }
+  });
+
+  // Get research task status
+  app.get("/api/research/:taskId", async (req, res) => {
+    try {
+      const { taskId } = req.params;
+      const task = researchOrchestrator.getTaskStatus(taskId);
+      
+      if (!task) {
+        return res.status(404).json({ error: "Research task not found" });
+      }
+      
+      res.json(task);
+    } catch (error) {
+      console.error("Error fetching research status:", error);
+      res.status(500).json({ error: "Failed to fetch research status" });
+    }
+  });
+
+  // Get all active research tasks
+  app.get("/api/research/active", async (req, res) => {
+    try {
+      const tasks = researchOrchestrator.getAllActiveTasks();
+      res.json(tasks);
+    } catch (error) {
+      console.error("Error fetching active research:", error);
+      res.status(500).json({ error: "Failed to fetch active research tasks" });
+    }
+  });
+
   // Health check endpoint
   app.get("/api/health", async (req, res) => {
     try {
       const activeWorkflows = await agentOrchestrator.getActiveWorkflows();
       const plugins = await storage.getPlugins();
+      const activeResearch = researchOrchestrator.getAllActiveTasks();
       
       res.json({
         status: "healthy",
         timestamp: new Date().toISOString(),
         activeWorkflows: activeWorkflows.length,
+        activeResearch: activeResearch.length,
         availablePlugins: plugins.filter(p => p.enabled).length,
         database: "connected"
       });
