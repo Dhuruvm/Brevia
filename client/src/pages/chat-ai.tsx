@@ -26,7 +26,7 @@ interface ChatSession {
 
 interface SimpleMessage {
   id: string;
-  role: string;
+  role: 'user' | 'assistant' | 'system';
   content: string;
   metadata?: any;
   createdAt: string;
@@ -194,7 +194,7 @@ export default function ChatAI() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-screen bg-background dark">
       {/* Header with Message Counter */}
       <div className="border-b bg-card">
         <div className="flex items-center justify-between p-4">
@@ -381,21 +381,77 @@ export default function ChatAI() {
         )}
       </div>
 
-      {/* Input Area */}
+      {/* Input Area - Replit Agent Style */}
       <div className="border-t bg-card p-4">
         <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto">
-          <div className="flex gap-2">
-            <Input
+          <div className="relative flex items-end gap-3 p-3 bg-background border border-border rounded-2xl">
+            {/* Attachment Button */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="flex-shrink-0 h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+              </svg>
+            </Button>
+
+            {/* Voice Input Button */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="flex-shrink-0 h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+              </svg>
+            </Button>
+
+            {/* Input Field */}
+            <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Ask me to research, take notes, create documents, or help with any task..."
-              className="flex-1"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage(e);
+                }
+              }}
+              placeholder="Add workflow animation real time animation and loading or typing or working show all logs one by one in chat of bot like replit Agent & Devin also make the interface like replit Agent as provided images screenshot end the end show count of msg & actions like 24 message & 12 actions"
               disabled={sendMessageMutation.isPending}
+              className="flex-1 bg-transparent border-0 outline-none resize-none text-foreground placeholder:text-muted-foreground min-h-[20px] max-h-32 py-1 text-sm leading-5"
+              rows={1}
+              style={{ 
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none'
+              }}
+              onInput={(e) => {
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = 'auto';
+                target.style.height = target.scrollHeight + 'px';
+              }}
             />
-            <Button 
-              type="submit" 
+
+            {/* Adjustments Icon */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="flex-shrink-0 h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+              </svg>
+            </Button>
+
+            {/* Send Button */}
+            <Button
+              type="submit"
               disabled={!message.trim() || sendMessageMutation.isPending}
               size="icon"
+              className="flex-shrink-0 h-8 w-8 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground disabled:bg-muted disabled:text-muted-foreground"
             >
               {sendMessageMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -404,9 +460,6 @@ export default function ChatAI() {
               )}
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground mt-2 text-center">
-            Brevia AI will automatically detect the best agent for your task
-          </p>
         </form>
       </div>
     </div>

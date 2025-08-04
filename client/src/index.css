@@ -39,25 +39,26 @@
 }
 
 .dark {
-  --background: hsl(0, 0%, 8%);
+  /* Replit Agent Dark Theme - Exact Colors */
+  --background: hsl(217, 19%, 14%);
   --foreground: hsl(0, 0%, 100%);
-  --muted: hsl(0, 0%, 15%);
-  --muted-foreground: hsl(0, 0%, 75%);
-  --popover: hsl(0, 0%, 12%);
+  --muted: hsl(217, 19%, 17%);
+  --muted-foreground: hsl(0, 0%, 65%);
+  --popover: hsl(217, 19%, 16%);
   --popover-foreground: hsl(0, 0%, 100%);
-  --card: hsl(0, 0%, 12%);
+  --card: hsl(217, 19%, 16%);
   --card-foreground: hsl(0, 0%, 100%);
-  --border: hsl(0, 0%, 20%);
-  --input: hsl(0, 0%, 15%);
-  --primary: hsl(0, 0%, 100%);
-  --primary-foreground: hsl(0, 0%, 8%);
-  --secondary: hsl(0, 0%, 15%);
-  --secondary-foreground: hsl(0, 0%, 100%);
-  --accent: hsl(0, 0%, 18%);
-  --accent-foreground: hsl(0, 0%, 100%);
+  --border: hsl(217, 19%, 20%);
+  --input: hsl(217, 19%, 18%);
+  --primary: hsl(221, 83%, 53%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(217, 19%, 20%);
+  --secondary-foreground: hsl(0, 0%, 85%);
+  --accent: hsl(217, 19%, 22%);
+  --accent-foreground: hsl(0, 0%, 85%);
   --destructive: hsl(0, 62%, 50%);
   --destructive-foreground: hsl(0, 0%, 100%);
-  --ring: hsl(0, 0%, 100%);
+  --ring: hsl(221, 83%, 53%);
   --radius: 0.5rem;
 }
 
@@ -71,8 +72,13 @@
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 
+  /* Force dark mode */
+  html {
+    @apply dark;
+  }
+
   html.dark {
-    background-color: hsl(0, 0%, 8%);
+    background-color: hsl(217, 19%, 14%);
   }
 }
 
