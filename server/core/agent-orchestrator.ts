@@ -34,9 +34,11 @@ export class AgentOrchestrator {
   async executeTask(request: TaskRequest): Promise<TaskResult> {
     console.log(`🚀 Starting ${request.agentType} task: ${request.task.substring(0, 100)}...`);
 
+    let workflowId = '';
     try {
       // Create workflow record
       const workflow = await this.createWorkflow(request);
+      workflowId = workflow.id;
       
       // Get appropriate agent
       const agent = this.createAgent(request.agentType, workflow.id, request.sessionId);
@@ -52,32 +54,99 @@ export class AgentOrchestrator {
         startTime: new Date()
       });
 
-      // Execute the agent workflow
-      const result = await agent.execute(request.task);
+      // Update workflow status to running
+      await storage.updateWorkflow(workflow.id, {
+        status: 'running',
+        startedAt: new Date()
+      });
+
+      console.log(`📋 Executing ${request.agentType} workflow with ${agent.steps?.length || 0} steps`);
+
+      // Execute the agent workflow with timeout protection
+      const result = await this.executeWithTimeout(agent, request.task, 300000); // 5 minute timeout
+
+      // Ensure workflow completion is recorded
+      await this.finalizeWorkflow(workflow.id, result, true);
 
       // Remove from active workflows
       this.activeWorkflows.delete(workflow.id);
 
-      console.log(`✅ ${request.agentType} task completed successfully`);
+      console.log(`✅ ${request.agentType} task completed successfully in ${Date.now() - this.activeWorkflows.get(workflow.id)?.startTime?.getTime() || 0}ms`);
 
       return {
         workflowId: workflow.id,
         success: result.success,
         content: result.content,
-        metadata: result.metadata,
+        metadata: {
+          ...result.metadata,
+          workflow_completed: true,
+          total_steps: agent.steps?.length || 0,
+          completed_steps: agent.steps?.filter((s: any) => s.status === 'completed').length || 0
+        },
         error: result.error
       };
 
     } catch (error) {
       console.error(`❌ ${request.agentType} task failed:`, error);
       
+      // Mark workflow as failed if we have workflowId
+      if (workflowId) {
+        try {
+          await this.finalizeWorkflow(workflowId, {
+            success: false,
+            content: '',
+            metadata: { error: error instanceof Error ? error.message : String(error) },
+            error: error instanceof Error ? error.message : String(error)
+          }, false);
+          this.activeWorkflows.delete(workflowId);
+        } catch (updateError) {
+          console.error('Failed to update workflow status:', updateError);
+        }
+      }
+      
       return {
-        workflowId: '',
+        workflowId: workflowId,
         success: false,
         content: '',
-        metadata: {},
+        metadata: { workflow_completed: false },
         error: error instanceof Error ? error.message : String(error)
       };
+    }
+  }
+
+  private async executeWithTimeout(agent: any, task: string, timeoutMs: number): Promise<any> {
+    return new Promise(async (resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error(`Agent execution timed out after ${timeoutMs}ms`));
+      }, timeoutMs);
+
+      try {
+        const result = await agent.execute(task);
+        clearTimeout(timeout);
+        resolve(result);
+      } catch (error) {
+        clearTimeout(timeout);
+        reject(error);
+      }
+    });
+  }
+
+  private async finalizeWorkflow(workflowId: string, result: any, success: boolean): Promise<void> {
+    try {
+      await storage.updateWorkflow(workflowId, {
+        status: success ? 'completed' : 'failed',
+        result: result,
+        confidence: result.metadata?.confidence || (success ? 0.8 : 0),
+        completedAt: new Date(),
+        metadata: {
+          ...result.metadata,
+          finalized_at: new Date().toISOString(),
+          execution_successful: success
+        }
+      });
+      console.log(`📊 Workflow ${workflowId} finalized with status: ${success ? 'completed' : 'failed'}`);
+    } catch (error) {
+      console.error(`Failed to finalize workflow ${workflowId}:`, error);
     }
   }
 

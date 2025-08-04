@@ -63,21 +63,24 @@ export abstract class BaseAgent {
   // Core execution method
   async execute(task: string): Promise<AgentResult> {
     try {
-      console.log(`🤖 ${this.config.type} Agent starting execution for task: ${task}`);
+      console.log(`🤖 ${this.config.type} Agent starting execution for task: ${task.substring(0, 100)}...`);
       
       // Define workflow steps
       this.steps = this.defineWorkflow(task);
+      console.log(`📋 Defined ${this.steps.length} workflow steps`);
       await this.updateWorkflowSteps();
 
-      // Execute steps sequentially
+      // Execute steps sequentially with progress tracking
       const stepOutputs: any[] = [];
       let context = { task, sessionId: this.sessionId };
+      let completedSteps = 0;
 
       for (let i = 0; i < this.steps.length; i++) {
         const step = this.steps[i];
+        const stepProgress = ((i / this.steps.length) * 100).toFixed(0);
         
         try {
-          console.log(`📋 Executing step: ${step.name}`);
+          console.log(`📋 Executing step ${i + 1}/${this.steps.length}: ${step.name} (${stepProgress}%)`);
           
           step.status = 'running';
           step.startTime = new Date();
@@ -87,20 +90,25 @@ export abstract class BaseAgent {
           await this.updateWorkflowSteps();
           await this.logStep(step, 'started', null, null);
 
-          const output = await this.executeStep(step, context);
+          // Execute step with timeout protection
+          const output = await this.executeStepWithTimeout(step, context, 60000); // 1 minute per step
           
           step.output = output;
           step.status = 'completed';
           step.endTime = new Date();
           stepOutputs.push(output);
+          completedSteps++;
           
           // Update context with step output
           context = { ...context, [`step_${step.id}`]: output };
           
+          // Add completion log
+          await this.addRealTimeLog(step, `✅ ${step.name} completed successfully`);
           await this.updateWorkflowSteps();
           await this.logStep(step, 'completed', null, output);
           
-          console.log(`✅ Step completed: ${step.name}`);
+          const stepTime = step.endTime.getTime() - step.startTime.getTime();
+          console.log(`✅ Step completed: ${step.name} (${stepTime}ms)`);
           
         } catch (error) {
           console.error(`❌ Step failed: ${step.name}`, error);
@@ -109,39 +117,86 @@ export abstract class BaseAgent {
           step.error = error instanceof Error ? error.message : String(error);
           step.endTime = new Date();
           
+          await this.addRealTimeLog(step, `❌ ${step.name} failed: ${step.error}`);
           await this.updateWorkflowSteps();
           await this.logStep(step, 'failed', error instanceof Error ? error.message : String(error), null);
           
           // Decide whether to continue or fail completely
-          if (step.name.includes('critical') || step.name.includes('required')) {
+          const isCritical = step.name.toLowerCase().includes('critical') || 
+                           step.name.toLowerCase().includes('required') ||
+                           step.name.toLowerCase().includes('essential');
+          
+          if (isCritical) {
             throw error;
           }
           
+          // Create fallback output for non-critical steps
+          const fallbackOutput = this.createFallbackOutput(step, error);
+          stepOutputs.push(fallbackOutput);
+          
           // Mark as skipped and continue
           step.status = 'skipped';
+          await this.addRealTimeLog(step, `⏭️ Skipping non-critical step, continuing workflow...`);
         }
       }
 
+      console.log(`📊 Workflow execution summary: ${completedSteps}/${this.steps.length} steps completed successfully`);
+
+      // Ensure we have outputs for synthesis
+      if (stepOutputs.length === 0) {
+        throw new Error('No step outputs available for synthesis');
+      }
+
       // Synthesize final result
+      console.log('🔄 Synthesizing final result...');
       const result = await this.synthesizeResult(stepOutputs);
+      
+      // Ensure result has required properties
+      if (!result || typeof result !== 'object') {
+        throw new Error('Invalid result from synthesis step');
+      }
+
+      // Add workflow completion metadata
+      result.metadata = {
+        ...result.metadata,
+        workflow_steps: this.steps.length,
+        completed_steps: completedSteps,
+        success_rate: (completedSteps / this.steps.length * 100).toFixed(1) + '%',
+        execution_time: Date.now() - this.startTime.getTime(),
+        workflow_completed: true
+      };
       
       // Update workflow as completed
       await this.completeWorkflow(result);
       
-      console.log(`🎉 ${this.config.type} Agent completed successfully`);
+      console.log(`🎉 ${this.config.type} Agent completed successfully - ${completedSteps}/${this.steps.length} steps executed`);
       return result;
       
     } catch (error) {
       console.error(`💥 ${this.config.type} Agent failed:`, error);
       
+      // Mark any running steps as failed
+      for (const step of this.steps) {
+        if (step.status === 'running') {
+          step.status = 'failed';
+          step.error = 'Agent execution terminated';
+          step.endTime = new Date();
+        }
+      }
+      await this.updateWorkflowSteps();
+      
       const failedResult: AgentResult = {
         success: false,
-        content: '',
+        content: error instanceof Error ? error.message : String(error),
         metadata: {
           confidence: 0,
           processingTime: Date.now() - this.startTime.getTime(),
           tokensUsed: 0,
-          modelsUsed: []
+          modelsUsed: [],
+          workflow_steps: this.steps.length,
+          completed_steps: this.steps.filter(s => s.status === 'completed').length,
+          workflow_completed: false,
+          failure_reason: error instanceof Error ? error.message : String(error)
         },
         error: error instanceof Error ? error.message : String(error)
       };
@@ -149,6 +204,34 @@ export abstract class BaseAgent {
       await this.completeWorkflow(failedResult);
       return failedResult;
     }
+  }
+
+  private async executeStepWithTimeout(step: AgentStep, context: any, timeoutMs: number): Promise<any> {
+    return new Promise(async (resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error(`Step "${step.name}" timed out after ${timeoutMs}ms`));
+      }, timeoutMs);
+
+      try {
+        const result = await this.executeStep(step, context);
+        clearTimeout(timeout);
+        resolve(result);
+      } catch (error) {
+        clearTimeout(timeout);
+        reject(error);
+      }
+    });
+  }
+
+  private createFallbackOutput(step: AgentStep, error: any): any {
+    return {
+      step_id: step.id,
+      step_name: step.name,
+      status: 'fallback',
+      error: error instanceof Error ? error.message : String(error),
+      fallback_data: `Fallback data for ${step.name}`,
+      timestamp: new Date().toISOString()
+    };
   }
 
   // Workflow management methods
@@ -225,9 +308,21 @@ export abstract class BaseAgent {
   // Quality assessment methods
   // Real-time logging method
   protected async addRealTimeLog(step: AgentStep, logMessage: string) {
-    if (!step.logs) step.logs = [];
-    step.logs.push(`[${new Date().toISOString()}] ${logMessage}`);
-    await this.updateWorkflowSteps();
+    try {
+      if (!step.logs) step.logs = [];
+      const timestamp = new Date().toISOString().split('T')[1].split('.')[0]; // Just time part
+      step.logs.push(`[${timestamp}] ${logMessage}`);
+      
+      // Update workflow with new logs - but don't wait for it to avoid blocking
+      this.updateWorkflowSteps().catch(error => {
+        console.warn('Failed to update workflow logs:', error);
+      });
+      
+      // Small delay to make logs visible
+      await new Promise(resolve => setTimeout(resolve, 100));
+    } catch (error) {
+      console.warn('Failed to add real-time log:', error);
+    }
   }
 
   protected assessContentQuality(content: string): number {
