@@ -15,26 +15,26 @@ const QUICK_ACTIONS = [
   {
     icon: Search,
     label: "Deep Research",
-    description: "Conduct comprehensive research on any topic",
-    prompt: "Help me research this topic in depth:"
+    description: "Comprehensive multi-source research and analysis",
+    prompt: "Research this topic comprehensively:"
   },
   {
     icon: Sparkles,
-    label: "Creative Writing",
-    description: "Generate creative content and ideas",
-    prompt: "Help me create something creative about:"
+    label: "Market Analysis",
+    description: "Industry trends and market research",
+    prompt: "Analyze market trends and data for:"
   },
   {
     icon: FileText,
-    label: "Document Creation",
-    description: "Create professional documents and reports",
-    prompt: "Help me create a professional document about:"
+    label: "Academic Research",
+    description: "Scientific and academic source investigation",
+    prompt: "Find academic research and peer-reviewed studies on:"
   },
   {
     icon: Code,
-    label: "Code & Analysis",
-    description: "Programming help and code analysis",
-    prompt: "Help me with programming and analysis for:"
+    label: "Technical Analysis",
+    description: "Technology research and technical deep-dive",
+    prompt: "Provide technical research and analysis on:"
   }
 ];
 
@@ -162,7 +162,7 @@ export default function ChatEnhanced() {
                 <Menu className="w-4 h-4" />
               </Button>
               <h1 className="text-xl font-semibold">
-                {currentSession?.title || "Brevia AI"}
+                {currentSession?.title || "Brevia Research Agent"}
               </h1>
             </div>
             <Button 
@@ -186,10 +186,10 @@ export default function ChatEnhanced() {
               <div className="flex flex-col items-center justify-center h-full text-center space-y-8 p-4">
                 <div className="space-y-4">
                   <h2 className="text-3xl font-semibold text-foreground">
-                    How can I help you today?
+                    I am Brevia, your Research Agent
                   </h2>
                   <p className="text-muted-foreground max-w-md">
-                    I can help with research, writing, analysis, and more. Choose a quick action or ask me anything.
+                    I exist solely to explore, analyze, and master complex subjects through intelligent automation and source-driven research. Choose a research focus or ask me to investigate any topic.
                   </p>
                 </div>
                 
@@ -271,7 +271,7 @@ export default function ChatEnhanced() {
                 <Textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Message Brevia AI..."
+                  placeholder="Ask Brevia to research any topic..."
                   className="min-h-[60px] max-h-[200px] pr-12 resize-none rounded-2xl border border-gray-200 dark:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 transition-colors"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {

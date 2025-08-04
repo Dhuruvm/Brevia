@@ -1,4 +1,5 @@
 import { storage } from '../storage';
+import { BreviaResearchAgent } from '../agents/brevia-research-agent';
 import { ResearchAgent } from '../agents/research-agent';
 import { NotesAgent } from '../agents/notes-agent';
 import { pluginManager } from './plugin-manager';
@@ -166,7 +167,7 @@ export class AgentOrchestrator {
   private createAgent(agentType: AgentType, workflowId: string, sessionId: string): any {
     switch (agentType) {
       case 'research':
-        return new ResearchAgent(workflowId, sessionId);
+        return new BreviaResearchAgent();
       case 'notes':
         return new NotesAgent(workflowId, sessionId);
       case 'documents':
