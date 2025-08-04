@@ -252,21 +252,36 @@ Format as JSON:
   }
 
   private async validateSources(sources: Source[]): Promise<Source[]> {
+    await this.addRealTimeLog(this.steps[2], '🔍 Validating source credibility...');
+    await new Promise(resolve => setTimeout(resolve, 800));
+
     const validatedSources = [];
+    const minCredibility = 0.3;
+    const minRelevance = 0.5;
 
     for (const source of sources) {
-      const minCredibility = 0.3;
-      const minRelevance = 0.5;
+      try {
+        // Validate source structure
+        if (!source.title || !source.content || typeof source.credibility_score !== 'number') {
+          await this.addRealTimeLog(this.steps[2], `⚠️ Skipping malformed source: ${source.title || 'Unknown'}`);
+          continue;
+        }
 
-      if ((source.credibility_score || 0) >= minCredibility && 
-          (source.relevance_score || 0) >= minRelevance) {
-        validatedSources.push(source);
-      } else {
-        console.log(`🚫 Filtered out low-quality source: ${source.title}`);
+        const credibility = source.credibility_score || 0;
+        const relevance = source.relevance_score || 0;
+
+        if (credibility >= minCredibility && relevance >= minRelevance) {
+          validatedSources.push(source);
+          await this.addRealTimeLog(this.steps[2], `✅ Validated: ${source.title} (credibility: ${credibility.toFixed(2)})`);
+        } else {
+          await this.addRealTimeLog(this.steps[2], `🚫 Filtered out: ${source.title} (credibility: ${credibility.toFixed(2)})`);
+        }
+      } catch (error) {
+        await this.addRealTimeLog(this.steps[2], `❌ Error validating source: ${source.title || 'Unknown'}`);
       }
     }
 
-    console.log(`✅ Validated ${validatedSources.length}/${sources.length} sources`);
+    await this.addRealTimeLog(this.steps[2], `📊 Validation complete: ${validatedSources.length}/${sources.length} sources approved`);
     return validatedSources;
   }
 
@@ -373,7 +388,7 @@ ${sources.map(s => `- [${s.title}](${s.url || '#'})`).join('\n')}
 
   private createMockSource(sourceData: Omit<Source, 'id'>): Source {
     return {
-      id: Date.now().toString(),
+      id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       type: sourceData.type,
       title: sourceData.title,
       url: sourceData.url,
@@ -383,5 +398,25 @@ ${sources.map(s => `- [${s.title}](${s.url || '#'})`).join('\n')}
       relevance_score: sourceData.relevance_score,
       metadata: sourceData.metadata
     };
+  }
+
+  private assessSourceCredibility(url: string, domain: string): number {
+    let credibility = 0.5; // Base score
+
+    // Academic and government sources
+    if (domain.includes('.edu')) credibility += 0.3;
+    if (domain.includes('.gov')) credibility += 0.4;
+    if (domain.includes('.org')) credibility += 0.2;
+    
+    // Known reliable sources
+    if (domain.includes('wikipedia')) credibility += 0.2;
+    if (domain.includes('research')) credibility += 0.25;
+    if (domain.includes('scholar')) credibility += 0.3;
+    
+    // Commercial sources (lower weight)
+    if (domain.includes('.com')) credibility += 0.1;
+    
+    // Ensure score is between 0 and 1
+    return Math.min(Math.max(credibility, 0), 1);
   }
 }
