@@ -43,45 +43,83 @@ export function WorkflowAnimation({
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
   const [currentStepLogs, setCurrentStepLogs] = useState<string[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [persistedSteps, setPersistedSteps] = useState<WorkflowStep[]>([]);
+  const [allLogs, setAllLogs] = useState<Record<string, string[]>>({});
+
+  // Persist steps to prevent disappearing
+  useEffect(() => {
+    if (steps && steps.length > 0) {
+      setPersistedSteps(prevSteps => {
+        const newSteps = [...prevSteps];
+        steps.forEach(step => {
+          const existingIndex = newSteps.findIndex(s => s.id === step.id);
+          if (existingIndex >= 0) {
+            // Update existing step but keep its logs
+            newSteps[existingIndex] = { ...step, logs: newSteps[existingIndex].logs || step.logs };
+          } else {
+            newSteps.push(step);
+          }
+        });
+        return newSteps;
+      });
+    }
+  }, [steps]);
 
   // Auto-expand current running step
   useEffect(() => {
-    if (currentStep < steps.length) {
-      const currentStepId = steps[currentStep]?.id;
-      if (currentStepId && steps[currentStep]?.status === 'running') {
+    const displaySteps = persistedSteps.length > 0 ? persistedSteps : steps;
+    if (currentStep < displaySteps.length) {
+      const currentStepId = displaySteps[currentStep]?.id;
+      if (currentStepId && displaySteps[currentStep]?.status === 'running') {
         setExpandedSteps(prev => new Set(prev).add(currentStepId));
       }
     }
-  }, [currentStep, steps]);
+  }, [currentStep, steps, persistedSteps]);
 
-  // Simulate real-time log streaming for current step
+  // Simulate real-time log streaming for current step with persistence
   useEffect(() => {
-    if (status === 'running' && currentStep < steps.length) {
-      const step = steps[currentStep];
+    const displaySteps = persistedSteps.length > 0 ? persistedSteps : steps;
+    if (status === 'running' && currentStep < displaySteps.length) {
+      const step = displaySteps[currentStep];
       if (step?.status === 'running') {
-        // Simulate streaming logs
+        const stepId = step.id;
+        
+        // Skip if we already have logs for this step
+        if (allLogs[stepId] && allLogs[stepId].length > 0) {
+          return;
+        }
+        
+        // Simulate streaming logs with more realistic content
         const logs = [
-          `Starting ${step.name}...`,
-          `Analyzing ${agentType} requirements...`,
-          `Processing task: "${task.substring(0, 50)}..."`,
-          `Executing workflow step ${currentStep + 1} of ${steps.length}`,
-          `Generating response...`
+          `🚀 Starting ${step.name}...`,
+          `🔍 Analyzing ${agentType} requirements...`,
+          `📝 Processing task: "${task.substring(0, 50)}${task.length > 50 ? '...' : ''}"`,
+          `⚙️ Executing workflow step ${currentStep + 1} of ${displaySteps.length}`,
+          `🤖 ${agentType} agent processing request...`,
+          `📊 Gathering relevant information...`,
+          `🔄 Generating comprehensive response...`,
+          `✨ Finalizing results...`
         ];
 
         let logIndex = 0;
         const interval = setInterval(() => {
           if (logIndex < logs.length) {
-            setCurrentStepLogs(prev => [...prev, logs[logIndex]]);
+            const newLog = logs[logIndex];
+            setAllLogs(prev => ({
+              ...prev,
+              [stepId]: [...(prev[stepId] || []), newLog]
+            }));
+            setCurrentStepLogs(prev => [...prev, newLog]);
             logIndex++;
           } else {
             clearInterval(interval);
           }
-        }, 1500);
+        }, 2000); // Slower timing for better readability
 
         return () => clearInterval(interval);
       }
     }
-  }, [status, currentStep, steps, agentType, task]);
+  }, [status, currentStep, steps, persistedSteps, agentType, task, allLogs]);
 
   const toggleStep = (stepId: string) => {
     setExpandedSteps(prev => {
@@ -122,8 +160,9 @@ export function WorkflowAnimation({
     return null;
   };
 
-  const completedSteps = steps.filter(s => s.status === 'completed').length;
-  const totalSteps = steps.length;
+  const displaySteps = persistedSteps.length > 0 ? persistedSteps : steps;
+  const completedSteps = displaySteps.filter(s => s.status === 'completed').length;
+  const totalSteps = displaySteps.length;
   const progressPercentage = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0;
 
   return (
@@ -189,7 +228,7 @@ export function WorkflowAnimation({
               {/* Steps list */}
               <ScrollArea className="max-h-96">
                 <div className="space-y-2 px-4">
-                  {steps.map((step, index) => (
+                  {displaySteps.map((step, index) => (
                     <div key={step.id} className="space-y-2">
                       <div
                         className={`flex items-center gap-2 p-2 rounded-md transition-colors cursor-pointer
