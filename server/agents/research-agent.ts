@@ -310,7 +310,7 @@ export class ResearchAgent extends BaseAgent {
   private async extractDetailedInsights(sources: Source[]): Promise<any> {
     await this.addRealTimeLog(this.steps[3], '🧠 Analyzing content for key insights...');
 
-    const insights = {
+    const insights: Record<string, string[]> = {
       key_findings: [],
       statistical_data: [],
       expert_opinions: [],
@@ -382,7 +382,8 @@ Format as JSON:
 
     // Remove duplicates and rank by importance
     Object.keys(insights).forEach(key => {
-      insights[key] = [...new Set(insights[key])]
+      const uniqueItems = Array.from(new Set(insights[key]));
+      insights[key] = uniqueItems
         .slice(0, 10) // Limit to top 10 per category
         .filter(item => item && item.length > 10);
     });
@@ -450,38 +451,38 @@ Make it informative, well-researched, and actionable. Use specific details from 
 Based on comprehensive analysis of ${sources.length} verified sources, this report provides in-depth insights into ${task}. Our research reveals significant developments and practical implications across multiple dimensions of this topic.
 
 **Key Highlights:**
-${insights.key_findings?.slice(0, 3).map(finding => `• ${finding}`).join('\n') || '• Comprehensive analysis reveals multiple important aspects\n• Current research shows significant relevance\n• Practical applications identified across various sectors'}
+${insights.key_findings?.slice(0, 3).map((finding: string) => `• ${finding}`).join('\n') || '• Comprehensive analysis reveals multiple important aspects\n• Current research shows significant relevance\n• Practical applications identified across various sectors'}
 
 ## Key Research Findings
 
 ### Primary Discoveries
-${insights.key_findings?.slice(0, 6).map(finding => `**${finding}**\n   Research indicates this represents a significant development with practical implications.`).join('\n\n') || '**Comprehensive Analysis Completed**\n   Multiple research dimensions have been thoroughly investigated with high-quality sources.'}
+${insights.key_findings?.slice(0, 6).map((finding: string) => `**${finding}**\n   Research indicates this represents a significant development with practical implications.`).join('\n\n') || '**Comprehensive Analysis Completed**\n   Multiple research dimensions have been thoroughly investigated with high-quality sources.'}
 
 ### Statistical Overview
 ${insights.statistical_data?.length > 0 ? 
-  `Our analysis reveals the following quantitative insights:\n${insights.statistical_data.slice(0, 4).map(stat => `• ${stat}`).join('\n')}` : 
+  `Our analysis reveals the following quantitative insights:\n${insights.statistical_data.slice(0, 4).map((stat: string) => `• ${stat}`).join('\n')}` : 
   '• Research methodology employed rigorous analytical standards\n• Multiple data points evaluated for accuracy\n• Cross-referenced findings ensure reliability'}
 
 ## Current Trends & Market Analysis
 
 ${insights.trends?.length > 0 ? 
-  insights.trends.slice(0, 4).map(trend => `**${trend}**\n   Industry analysis shows this trend has significant impact on current and future developments.`).join('\n\n') : 
+  insights.trends.slice(0, 4).map((trend: string) => `**${trend}**\n   Industry analysis shows this trend has significant impact on current and future developments.`).join('\n\n') : 
   '**Emerging Developments**\n   Current market research identifies several key trends shaping the landscape.\n\n**Innovation Patterns**\n   Analysis reveals consistent patterns of advancement and adoption.'}
 
 ## Expert Insights & Professional Perspectives
 
 ${insights.expert_opinions?.length > 0 ? 
-  insights.expert_opinions.slice(0, 3).map(opinion => `> "${opinion}"\n   *Source: Professional industry analysis*`).join('\n\n') : 
+  insights.expert_opinions.slice(0, 3).map((opinion: string) => `> "${opinion}"\n   *Source: Professional industry analysis*`).join('\n\n') : 
   '> "The research demonstrates significant potential for practical application and continued development."\n   *Source: Academic research analysis*\n\n> "Current trends indicate sustained growth and innovation in this area."\n   *Source: Industry expert consultation*'}
 
 ## Practical Implications & Applications
 
 ${insights.recommendations?.length > 0 ? 
-  `### Actionable Recommendations\n${insights.recommendations.slice(0, 4).map(rec => `• **${rec}**`).join('\n')}` : 
+  `### Actionable Recommendations\n${insights.recommendations.slice(0, 4).map((rec: string) => `• **${rec}**`).join('\n')}` : 
   '### Strategic Considerations\n• Implementation strategies should consider current market conditions\n• Best practices indicate phased approach for optimal results\n• Stakeholder engagement critical for successful outcomes\n• Continuous monitoring recommended for adaptive management'}
 
 ${insights.case_studies?.length > 0 ? 
-  `### Case Study Examples\n${insights.case_studies.slice(0, 2).map(study => `**${study}**\n   This example demonstrates practical application and measurable outcomes.`).join('\n\n')}` : 
+  `### Case Study Examples\n${insights.case_studies.slice(0, 2).map((study: string) => `**${study}**\n   This example demonstrates practical application and measurable outcomes.`).join('\n\n')}` : 
   '### Implementation Examples\n**Successful Application Models**\n   Research identifies several successful implementation patterns across different contexts.\n\n**Best Practice Frameworks**\n   Analysis reveals effective approaches that maximize positive outcomes.'}
 
 ## Conclusions & Strategic Recommendations
@@ -504,7 +505,7 @@ Based on comprehensive analysis of high-quality sources, ${task} represents a si
 **Source Validation Process:**
 • ${sources.length} total sources evaluated
 • ${highQualitySources.length} sources met high-credibility standards (${((highQualitySources.length/sources.length)*100).toFixed(0)}% quality rate)
-• Multiple source types: ${[...new Set(sources.map(s => s.type))].join(', ')}
+• Multiple source types: ${Array.from(new Set(sources.map(s => s.type))).join(', ')}
 
 **Quality Assurance:**
 • Credibility scoring applied to all sources
@@ -626,7 +627,7 @@ Consumer adoption metrics exceed forecasts, with early adopter segments showing 
       'blog': 0.4
     };
 
-    score = typeScores[source.type] || 0.6;
+    score = (typeScores as any)[source.type] || 0.6;
 
     // URL-based credibility
     if (source.url) {
@@ -653,9 +654,9 @@ Consumer adoption metrics exceed forecasts, with early adopter segments showing 
     return source.relevance_score || 0.8;
   }
 
-  private extractInsightsFromContent(source: Source): any {
+  private extractInsightsFromContent(source: Source): Record<string, string[]> {
     const content = source.content.toLowerCase();
-    const insights = {
+    const insights: Record<string, string[]> = {
       key_findings: [],
       statistical_data: [],
       expert_opinions: [],
@@ -668,7 +669,7 @@ Consumer adoption metrics exceed forecasts, with early adopter segments showing 
     const statRegex = /\d+%|\d+\.\d+%|\$\d+|\d+x increase|\d+ million|\d+ billion/g;
     const statMatches = source.content.match(statRegex);
     if (statMatches) {
-      insights.statistical_data = statMatches.slice(0, 3).map(stat => 
+      insights.statistical_data = statMatches.slice(0, 3).map((stat: string) => 
         `Research indicates ${stat} in relevant metrics`
       );
     }
@@ -707,8 +708,11 @@ Consumer adoption metrics exceed forecasts, with early adopter segments showing 
       workflowId: this.workflowId,
       type: source.type,
       title: source.title,
-      url: source.url,
+      url: source.url || null,
       content: source.summary,
+      summary: source.summary,
+      embedding: null,
+      relevance_score: source.relevance_score || 0.8,
       credibility_score: source.credibility_score,
       metadata: source.metadata
     });
@@ -738,13 +742,10 @@ Consumer adoption metrics exceed forecasts, with early adopter segments showing 
         processingTime: Date.now() - this.startTime.getTime(),
         tokensUsed: this.estimateTokens(finalReport),
         modelsUsed: [this.config.models.primary],
-        quality_metrics: {
-```text
-          source_count: sources.length,
-          high_quality_sources: sources.filter((s: Source) => s.credibility_score > 0.8).length,
-          insight_categories: Object.keys(insights).length,
-          report_length: finalReport.length
-        }
+        source_count: sources.length,
+        high_quality_sources: sources.filter((s: Source) => s.credibility_score > 0.8).length,
+        insight_categories: Object.keys(insights).length,
+        report_length: finalReport.length
       }
     };
   }
