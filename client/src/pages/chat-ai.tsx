@@ -15,6 +15,7 @@ import { RealTimeWorkflow } from "@/components/chat/real-time-workflow";
 import TypingIndicator from "@/components/ui/typing-indicator";
 import { Send, Bot, FileText, Loader2, ChevronLeft, Sparkles, Activity, MessageSquare, Zap } from "lucide-react";
 import { ChatInput } from "@/components/chat/chat-input";
+import { ResearchWorkflow } from "@/components/research/research-workflow";
 import type { Message } from "@shared/schema";
 import { AgentMessage } from "@/components/chat/agent-message";
 import { MessageCounter } from "@/components/chat/message-counter";
@@ -63,6 +64,8 @@ export default function ChatAI() {
   const [detectedAgentType, setDetectedAgentType] = useState<string>("");
   const [isHeaderExpanded, setIsHeaderExpanded] = useState(false);
   const [actionCount, setActionCount] = useState(0);
+  const [activeResearch, setActiveResearch] = useState<string>("");
+  const [researchActive, setResearchActive] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useMobile();
 
@@ -227,8 +230,8 @@ export default function ChatAI() {
           
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-lg">{agentConfig.icon}</span>
-              <h1 className="font-semibold">{agentConfig.name}</h1>
+              <span className="text-lg">🔍</span>
+              <h1 className="font-semibold">Brevia Research Agent</h1>
             </div>
             {detectedAgentType && (
               <Badge variant="secondary" className="text-xs">
@@ -260,7 +263,7 @@ export default function ChatAI() {
           actionCount={actionCount}
           isExpanded={isHeaderExpanded}
           onToggle={() => setIsHeaderExpanded(!isHeaderExpanded)}
-          subtitle={`Migration task in progress...`}
+          subtitle={researchActive ? `Researching: ${activeResearch.substring(0, 50)}...` : `Real-time web search capabilities`}
         />
       </div>
 
@@ -322,6 +325,18 @@ export default function ChatAI() {
                   actionCount={actionCount}
                 />
               ))}
+
+              {/* Active Research Workflow */}
+              {researchActive && activeResearch && (
+                <ResearchWorkflow
+                  query={activeResearch.replace(/^(Search the web for|Analyze in detail|Create research report on):\s*/, '')}
+                  isActive={researchActive}
+                  onComplete={(results) => {
+                    setResearchActive(false);
+                    console.log('Research completed:', results);
+                  }}
+                />
+              )}
               
               {sendMessageMutation.isPending && (
                 <RealTimeWorkflow
@@ -384,6 +399,11 @@ export default function ChatAI() {
         onSubmit={(msg, agentType) => {
           if (agentType) {
             setDetectedAgentType(agentType);
+            // Start research workflow for search actions
+            if (agentType === 'search') {
+              setActiveResearch(msg);
+              setResearchActive(true);
+            }
           }
           // The message is already set via onChange, so we just trigger send
           handleSendMessage({ preventDefault: () => {} } as any);

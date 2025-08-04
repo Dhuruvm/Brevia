@@ -12,34 +12,27 @@ interface ChatInputProps {
   disabled?: boolean;
 }
 
-const QUICK_ACTIONS = [
+const RESEARCH_ACTIONS = [
   { 
     icon: Search, 
-    label: "Research", 
-    prompt: "Research and analyze", 
-    agentType: "research",
+    label: "Web Search", 
+    prompt: "Search the web for", 
+    action: "search",
     color: "bg-blue-500 hover:bg-blue-600"
   },
   { 
     icon: FileText, 
-    label: "Notes", 
-    prompt: "Take notes about", 
-    agentType: "notes",
+    label: "Deep Analysis", 
+    prompt: "Analyze in detail", 
+    action: "analyze",
     color: "bg-green-500 hover:bg-green-600"
   },
   { 
     icon: Lightbulb, 
-    label: "Document", 
-    prompt: "Create a document about", 
-    agentType: "document",
+    label: "Research Report", 
+    prompt: "Create research report on", 
+    action: "report",
     color: "bg-purple-500 hover:bg-purple-600"
-  },
-  { 
-    icon: Presentation, 
-    label: "Present", 
-    prompt: "Create a presentation about", 
-    agentType: "presentation",
-    color: "bg-orange-500 hover:bg-orange-600"
   }
 ];
 
@@ -60,10 +53,10 @@ export function ChatInput({ value, onChange, onSubmit, isLoading, disabled }: Ch
     setSelectedAgent("");
   };
 
-  const handleQuickAction = (action: typeof QUICK_ACTIONS[0]) => {
+  const handleQuickAction = (action: typeof RESEARCH_ACTIONS[0]) => {
     const prompt = `${action.prompt}: `;
     onChange(prompt);
-    setSelectedAgent(action.agentType);
+    setSelectedAgent(action.action);
     setTimeout(() => textareaRef.current?.focus(), 0);
   };
 
@@ -79,13 +72,13 @@ export function ChatInput({ value, onChange, onSubmit, isLoading, disabled }: Ch
       {/* Quick Actions */}
       <div className="px-4 py-3 border-b border-border/50">
         <div className="flex gap-2 overflow-x-auto scrollbar-none">
-          {QUICK_ACTIONS.map((action, index) => (
+          {RESEARCH_ACTIONS.map((action, index) => (
             <Button
               key={index}
               variant="ghost"
               size="sm"
               className={`flex items-center gap-2 text-xs whitespace-nowrap rounded-full transition-all
-                ${selectedAgent === action.agentType 
+                ${selectedAgent === action.action 
                   ? `${action.color} text-white shadow-md` 
                   : 'hover:bg-muted/50'}`}
               onClick={() => handleQuickAction(action)}
@@ -103,7 +96,7 @@ export function ChatInput({ value, onChange, onSubmit, isLoading, disabled }: Ch
           <div className="mb-2">
             <Badge variant="secondary" className="text-xs">
               <Sparkles className="h-3 w-3 mr-1" />
-              {QUICK_ACTIONS.find(a => a.agentType === selectedAgent)?.label} Agent
+              {RESEARCH_ACTIONS.find(a => a.action === selectedAgent)?.label} Mode
             </Badge>
           </div>
         )}
@@ -115,7 +108,7 @@ export function ChatInput({ value, onChange, onSubmit, isLoading, disabled }: Ch
               value={value}
               onChange={(e) => onChange(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Message Brevia AI..."
+              placeholder="Ask Brevia to research anything..."
               className="min-h-[44px] max-h-[200px] resize-none pr-12 rounded-xl border-border/50 bg-muted/20 focus:bg-background transition-colors"
               disabled={disabled}
               rows={1}

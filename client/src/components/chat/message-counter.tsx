@@ -29,7 +29,7 @@ export function MessageCounter({
         <div className="flex items-center gap-2">
           <MessageSquare className="h-4 w-4" />
           <span className="font-medium text-sm">
-            {messageCount} message{messageCount !== 1 ? 's' : ''} & {actionCount} action{actionCount !== 1 ? 's' : ''}
+            Brevia Research Agent
           </span>
         </div>
         {subtitle && (
