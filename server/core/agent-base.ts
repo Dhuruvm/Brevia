@@ -184,8 +184,13 @@ export abstract class BaseAgent {
 
   // Helper methods
   protected estimateTokens(text: any): number {
+    if (!text) return 0;
     if (typeof text !== 'string') {
-      text = JSON.stringify(text);
+      try {
+        text = JSON.stringify(text);
+      } catch (error) {
+        return 0;
+      }
     }
     return Math.ceil(text.length / 4); // Rough estimation
   }
