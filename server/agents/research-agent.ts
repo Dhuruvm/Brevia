@@ -1,4 +1,3 @@
-
 import { BaseAgent, AgentConfig, AgentStep, AgentResult } from '../core/agent-base';
 import { pluginManager } from '../core/plugin-manager';
 import { storage } from '../storage';
@@ -93,19 +92,19 @@ export class ResearchAgent extends BaseAgent {
   private async createDetailedResearchPlan(task: string): Promise<any> {
     await this.addRealTimeLog(this.steps[0], '🔍 Analyzing research topic complexity...');
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     await this.addRealTimeLog(this.steps[0], '📊 Identifying key research dimensions...');
     await new Promise(resolve => setTimeout(resolve, 800));
-    
+
     await this.addRealTimeLog(this.steps[0], '🎯 Developing targeted search strategy...');
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     const llm = await pluginManager.getPlugin(this.config.models.primary);
-    
+
     const planPrompt = `Create a detailed research plan for: "${task}"
 
     Break down the topic into specific research areas and create comprehensive search strategies.
-    
+
     Provide a structured JSON response with:
     {
       "main_topic": "primary focus area",
@@ -168,7 +167,7 @@ export class ResearchAgent extends BaseAgent {
     const sources: Source[] = [];
 
     await this.addRealTimeLog(this.steps[1], '🔍 Searching knowledge base for existing research...');
-    
+
     // Search internal knowledge base first
     for (const topic of plan.sub_topics || [plan.main_topic]) {
       const knowledge = await storage.searchKnowledge(topic, 5);
@@ -208,7 +207,7 @@ export class ResearchAgent extends BaseAgent {
 
   private async generateRealisticSources(strategy: any, mainTopic: string): Promise<Source[]> {
     const sources: Source[] = [];
-    
+
     // Academic source
     const academicSource = await this.createQualitySource({
       type: 'academic',
@@ -266,13 +265,13 @@ export class ResearchAgent extends BaseAgent {
 
   private async validateAndRankSources(sources: Source[]): Promise<Source[]> {
     await this.addRealTimeLog(this.steps[2], '🔍 Evaluating source credibility and relevance...');
-    
+
     const validatedSources = [];
     let processedCount = 0;
 
     for (const source of sources) {
       processedCount++;
-      
+
       // Enhanced validation logic
       const credibilityScore = this.assessAdvancedCredibility(source);
       const relevanceScore = this.assessContentRelevance(source);
@@ -283,7 +282,7 @@ export class ResearchAgent extends BaseAgent {
         source.relevance_score = relevanceScore;
         source.metadata = { ...source.metadata, quality_score: qualityScore };
         validatedSources.push(source);
-        
+
         await this.addRealTimeLog(this.steps[2], 
           `✅ Validated: ${source.title.substring(0, 50)}... (Quality: ${(qualityScore * 100).toFixed(0)}%)`);
       } else {
@@ -304,13 +303,13 @@ export class ResearchAgent extends BaseAgent {
 
     await this.addRealTimeLog(this.steps[2], 
       `📊 Validation complete: ${validatedSources.length}/${sources.length} sources approved`);
-    
+
     return validatedSources;
   }
 
   private async extractDetailedInsights(sources: Source[]): Promise<any> {
     await this.addRealTimeLog(this.steps[3], '🧠 Analyzing content for key insights...');
-    
+
     const insights = {
       key_findings: [],
       statistical_data: [],
@@ -355,7 +354,7 @@ Format as JSON:
           const jsonMatch = response.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
             const sourceInsights = JSON.parse(jsonMatch[0]);
-            
+
             // Merge insights
             Object.keys(insights).forEach(key => {
               if (sourceInsights[key]) {
@@ -390,7 +389,7 @@ Format as JSON:
 
     await this.addRealTimeLog(this.steps[3], 
       `✅ Extracted ${Object.values(insights).flat().length} unique insights`);
-    
+
     return insights;
   }
 
@@ -399,7 +398,7 @@ Format as JSON:
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     const llm = await pluginManager.getPlugin(this.config.models.primary);
-    
+
     if (llm) {
       try {
         const reportPrompt = `Create a comprehensive, professional research report on: "${task}"
@@ -442,7 +441,7 @@ Make it informative, well-researched, and actionable. Use specific details from 
   private createStructuredReport(task: string, insights: any, sources: Source[]): string {
     const date = new Date().toLocaleDateString();
     const highQualitySources = sources.filter(s => s.credibility_score > 0.7);
-    
+
     return `# Research Report: ${task}
 *Generated on ${date} | ${sources.length} sources analyzed | Quality assurance: ${highQualitySources.length} high-credibility sources*
 
@@ -451,7 +450,7 @@ Make it informative, well-researched, and actionable. Use specific details from 
 Based on comprehensive analysis of ${sources.length} verified sources, this report provides in-depth insights into ${task}. Our research reveals significant developments and practical implications across multiple dimensions of this topic.
 
 **Key Highlights:**
-${insights.key_findings?.slice(0, 3).map(finding => `• ${finding}`).join'\n') || '• Comprehensive analysis reveals multiple important aspects\n• Current research shows significant relevance\n• Practical applications identified across various sectors'}
+${insights.key_findings?.slice(0, 3).map(finding => `• ${finding}`).join('\n') || '• Comprehensive analysis reveals multiple important aspects\n• Current research shows significant relevance\n• Practical applications identified across various sectors'}
 
 ## Key Research Findings
 
@@ -478,7 +477,7 @@ ${insights.expert_opinions?.length > 0 ?
 ## Practical Implications & Applications
 
 ${insights.recommendations?.length > 0 ? 
-  `### Actionable Recommendations\n${insights.recommendations.slice(0, 4).map(rec => `• **${rec}**`).join'\n')}` : 
+  `### Actionable Recommendations\n${insights.recommendations.slice(0, 4).map(rec => `• **${rec}**`).join('\n')}` : 
   '### Strategic Considerations\n• Implementation strategies should consider current market conditions\n• Best practices indicate phased approach for optimal results\n• Stakeholder engagement critical for successful outcomes\n• Continuous monitoring recommended for adaptive management'}
 
 ${insights.case_studies?.length > 0 ? 
@@ -530,39 +529,39 @@ ${sources.length > 8 ? `\n*Note: ${sources.length - 8} additional sources analyz
   private extractTopicsFromTask(task: string): string[] {
     const words = task.toLowerCase().split(/\s+/);
     const topics = [];
-    
+
     // Extract meaningful terms (longer than 3 characters, not common words)
     const stopWords = ['the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'how', 'what', 'why', 'when', 'where', 'which'];
-    
+
     for (const word of words) {
       if (word.length > 3 && !stopWords.includes(word)) {
         topics.push(word);
       }
     }
-    
+
     return topics.slice(0, 5); // Limit to 5 topics
   }
 
   private createIntelligentSummary(content: string): string {
     const sentences = content.split('.').filter(s => s.trim().length > 20);
     const keyPhrases = ['important', 'significant', 'key', 'major', 'critical', 'essential', 'primary'];
-    
+
     // Find sentences with key phrases
     const importantSentences = sentences.filter(s => 
       keyPhrases.some(phrase => s.toLowerCase().includes(phrase))
     );
-    
+
     if (importantSentences.length > 0) {
       return importantSentences.slice(0, 2).join('. ').trim() + '.';
     }
-    
+
     return sentences.slice(0, 2).join('. ').trim() + '.';
   }
 
   private calculateRelevance(content: string, topic: string): number {
     const topicWords = topic.toLowerCase().split(/\s+/);
     const contentWords = content.toLowerCase().split(/\s+/);
-    
+
     let matches = 0;
     for (const word of topicWords) {
       if (word.length > 3) {
@@ -570,7 +569,7 @@ ${sources.length > 8 ? `\n*Note: ${sources.length - 8} additional sources analyz
         matches += occurrences;
       }
     }
-    
+
     return Math.min(0.5 + (matches / (topicWords.length * 5)), 1.0);
   }
 
@@ -616,7 +615,7 @@ Consumer adoption metrics exceed forecasts, with early adopter segments showing 
 
   private assessAdvancedCredibility(source: Source): number {
     let score = 0.5; // Base score
-    
+
     // Source type credibility
     const typeScores = {
       'academic': 0.9,
@@ -626,26 +625,26 @@ Consumer adoption metrics exceed forecasts, with early adopter segments showing 
       'news_analysis': 0.7,
       'blog': 0.4
     };
-    
+
     score = typeScores[source.type] || 0.6;
-    
+
     // URL-based credibility
     if (source.url) {
       if (source.url.includes('.edu') || source.url.includes('.gov')) score += 0.1;
       if (source.url.includes('research') || source.url.includes('study')) score += 0.05;
       if (source.url.includes('https://')) score += 0.02;
     }
-    
+
     // Content quality indicators
     if (source.content.length > 1000) score += 0.05;
     if (source.content.includes('study') || source.content.includes('research')) score += 0.03;
     if (source.content.includes('%') || source.content.match(/\d+/g)) score += 0.02; // Contains data
-    
+
     // Metadata quality
     if (source.metadata?.peer_reviewed) score += 0.1;
     if (source.metadata?.citations && source.metadata.citations > 50) score += 0.05;
     if (source.metadata?.publication_year === '2024') score += 0.03;
-    
+
     return Math.min(score, 1.0);
   }
 
@@ -664,7 +663,7 @@ Consumer adoption metrics exceed forecasts, with early adopter segments showing 
       case_studies: [],
       recommendations: []
     };
-    
+
     // Extract sentences with statistical data
     const statRegex = /\d+%|\d+\.\d+%|\$\d+|\d+x increase|\d+ million|\d+ billion/g;
     const statMatches = source.content.match(statRegex);
@@ -673,18 +672,18 @@ Consumer adoption metrics exceed forecasts, with early adopter segments showing 
         `Research indicates ${stat} in relevant metrics`
       );
     }
-    
+
     // Extract key findings
     const sentences = source.content.split('.').filter(s => s.trim().length > 30);
     insights.key_findings = sentences.slice(0, 3).map(s => s.trim());
-    
+
     // Extract trends (sentences with trend-related keywords)
     const trendKeywords = ['increasing', 'growing', 'declining', 'trend', 'rising', 'falling'];
     const trendSentences = sentences.filter(s => 
       trendKeywords.some(keyword => s.toLowerCase().includes(keyword))
     );
     insights.trends = trendSentences.slice(0, 2);
-    
+
     return insights;
   }
 
@@ -693,7 +692,7 @@ Consumer adoption metrics exceed forecasts, with early adopter segments showing 
     const sourceRefs = sources.slice(0, 5).map((source, index) => 
       `[${index + 1}] ${source.title} - ${source.url || 'Internal Source'}`
     ).join('\n');
-    
+
     return `${report}\n\n## References\n${sourceRefs}`;
   }
 
@@ -702,7 +701,7 @@ Consumer adoption metrics exceed forecasts, with early adopter segments showing 
       id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       ...sourceData
     };
-    
+
     // Store source for future reference
     await this.storeSource({
       workflowId: this.workflowId,
@@ -713,7 +712,7 @@ Consumer adoption metrics exceed forecasts, with early adopter segments showing 
       credibility_score: source.credibility_score,
       metadata: source.metadata
     });
-    
+
     return source;
   }
 
@@ -721,9 +720,9 @@ Consumer adoption metrics exceed forecasts, with early adopter segments showing 
     const finalReport = stepOutputs[stepOutputs.length - 1];
     const sources = stepOutputs[2] || [];
     const insights = stepOutputs[3] || {};
-    
+
     const confidence = this.calculateOverallConfidence(sources, insights);
-    
+
     return {
       success: true,
       content: finalReport,
@@ -740,6 +739,7 @@ Consumer adoption metrics exceed forecasts, with early adopter segments showing 
         tokensUsed: this.estimateTokens(finalReport),
         modelsUsed: [this.config.models.primary],
         quality_metrics: {
+```text
           source_count: sources.length,
           high_quality_sources: sources.filter((s: Source) => s.credibility_score > 0.8).length,
           insight_categories: Object.keys(insights).length,
@@ -751,11 +751,11 @@ Consumer adoption metrics exceed forecasts, with early adopter segments showing 
 
   private calculateOverallConfidence(sources: Source[], insights: any): number {
     if (!sources || sources.length === 0) return 0.3;
-    
+
     const avgCredibility = sources.reduce((sum, s) => sum + s.credibility_score, 0) / sources.length;
     const sourceCount = Math.min(sources.length / 10, 1); // Scale by source count
     const insightDepth = Object.values(insights).flat().length / 20; // Scale by insight count
-    
+
     return Math.min(avgCredibility * 0.4 + sourceCount * 0.3 + insightDepth * 0.3, 0.95);
   }
 }
