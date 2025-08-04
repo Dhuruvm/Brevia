@@ -4,13 +4,13 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { ChatSession, Source, AgentLog, AgentWorkflow } from "@shared/schema";
+import type { ChatSession, Source, AgentLog, Workflow } from "@shared/schema";
 
 interface RightPanelProps {
   session: ChatSession | null;
   sources: Source[];
   logs: AgentLog[];
-  workflow: AgentWorkflow | null;
+  workflow: Workflow | null;
   onClose?: () => void;
 }
 
@@ -67,7 +67,13 @@ export default function RightPanel({ session, sources, logs, workflow, onClose }
     }
   };
 
-  const artifacts = [
+  const artifacts: Array<{
+    name: string;
+    description: string;
+    status: string;
+    statusColor: string;
+    metadata: string | null;
+  }> = [
     {
       name: "Research Summary",
       description: "AI Agents 2025 Report • 2,847 words",
@@ -168,7 +174,7 @@ export default function RightPanel({ session, sources, logs, workflow, onClose }
                     <div className="text-xs font-medium truncate text-foreground">{source.title}</div>
                     <div className="text-xs text-muted-foreground mb-1">
                       {source.url ? new URL(source.url).hostname : 'Local'} • {
-                        source.addedAt ? new Date(source.addedAt).toLocaleTimeString() : 'Recently'
+                        source.createdAt ? new Date(source.createdAt).toLocaleTimeString() : 'Recently'
                       }
                     </div>
                     {source.content && (
@@ -204,7 +210,10 @@ export default function RightPanel({ session, sources, logs, workflow, onClose }
                 </Badge>
                 {artifact.metadata && (
                   <Badge className="text-xs bg-muted/50 text-muted-foreground border-border/50">
-                    {artifact.metadata}
+                    {typeof artifact.metadata === 'object' 
+                      ? JSON.stringify(artifact.metadata) 
+                      : String(artifact.metadata)
+                    }
                   </Badge>
                 )}
               </div>
@@ -233,15 +242,14 @@ export default function RightPanel({ session, sources, logs, workflow, onClose }
                     {log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : '--:--:--'}
                   </span>
                   <span className={`flex-shrink-0 ${
-                    log.level === 'error' ? 'text-red-500' : 
-                    log.level === 'info' ? 'text-primary' :
-                    log.level === 'debug' ? 'text-blue-500' :
-                    'text-accent'
+                    log.success === false ? 'text-red-500' : 
+                    log.success === true ? 'text-green-500' :
+                    'text-blue-500'
                   }`}>
-                    {log.level.toUpperCase()}
+                    {log.success === false ? 'ERROR' : log.success === true ? 'SUCCESS' : 'INFO'}
                   </span>
                   <span className="text-foreground flex-1 min-w-0 break-words">
-                    {log.message}
+                    {log.error || log.step || 'Agent activity'}
                   </span>
                 </div>
               ))
