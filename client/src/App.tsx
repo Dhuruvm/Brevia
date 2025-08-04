@@ -12,9 +12,9 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-        <Route path="/chat" component={Chat} />
-        <Route path="/chat-enhanced" component={ChatEnhanced} />
-        <Route component={NotFound} />
+      <Route path="/chat" component={Chat} />
+      <Route path="/chat-enhanced" component={ChatEnhanced} />
+      <Route component={NotFound} />
     </Switch>
   );
 }

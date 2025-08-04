@@ -246,48 +246,49 @@ export default function Chat() {
         </div>
 
         {/* Input Area */}
-        <div className="border-t border-gray-200 dark:border-gray-700 bg-background">
-          <div className="max-w-4xl mx-auto p-4">
-            <div className="relative">
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Message Brevia AI..."
-                className="min-h-[60px] max-h-[200px] pr-12 resize-none rounded-2xl border border-gray-200 dark:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 transition-colors"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage(input);
-                  }
-                }}
-              />
-              <Button
-                onClick={() => handleSendMessage(input)}
-                disabled={!input.trim() || isTyping}
-                size="sm"
-                className="absolute bottom-2 right-2 h-8 w-8 rounded-full bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 text-white dark:text-black"
-              >
-                <Send className="w-4 h-4" />
-              </Button>
-            </div>
+          <div className="border-t border-gray-200 dark:border-gray-700 bg-background">
+            <div className="max-w-4xl mx-auto p-4">
+              <div className="relative">
+                <Textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Message Brevia AI..."
+                  className="min-h-[60px] max-h-[200px] pr-12 resize-none rounded-2xl border border-gray-200 dark:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 transition-colors"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage(input);
+                    }
+                  }}
+                />
+                <Button
+                  onClick={() => handleSendMessage(input)}
+                  disabled={!input.trim() || isTyping}
+                  size="sm"
+                  className="absolute bottom-2 right-2 h-8 w-8 rounded-full bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 text-white dark:text-black"
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
+              </div>
 
-            {/* Quick action buttons for input */}
-            <div className="flex flex-wrap gap-2 mt-3">
-              {QUICK_ACTIONS.map((action) => {
-                const Icon = action.icon;
-                return (
-                  <Button
-                    key={action.label}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleQuickAction(action)}
-                    className="text-xs h-7 rounded-full border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
-                  >
-                    <Icon className="w-3 h-3 mr-1" />
-                    {action.label}
-                  </Button>
-                );
-              })}
+              {/* Quick action buttons for input */}
+              <div className="flex flex-wrap gap-2 mt-3">
+                {QUICK_ACTIONS.map((action) => {
+                  const Icon = action.icon;
+                  return (
+                    <Button
+                      key={action.label}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleQuickAction(action)}
+                      className="text-xs h-7 rounded-full border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
+                    >
+                      <Icon className="w-3 h-3 mr-1" />
+                      {action.label}
+                    </Button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
