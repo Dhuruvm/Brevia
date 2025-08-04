@@ -1,235 +1,293 @@
-import { 
-  type User, 
-  type InsertUser, 
-  type ChatSession, 
-  type InsertChatSession,
-  type Message,
-  type InsertMessage,
-  type AgentWorkflow,
-  type InsertAgentWorkflow,
-  type Document,
-  type InsertDocument,
-  type Source,
-  type InsertSource,
-  type AgentLog,
-  type InsertAgentLog,
-  type AgentType
-} from "@shared/schema";
-import { randomUUID } from "crypto";
+import { db } from './db';
+import { users, chatSessions, messages, workflows, documents, sources, agentLogs, knowledgeBase, agentMetrics, plugins } from "@shared/schema";
+import type { User, InsertUser, ChatSession, InsertChatSession, Message, InsertMessage, 
+  Workflow, InsertWorkflow, Document, InsertDocument, Source, InsertSource, 
+  AgentLog, InsertAgentLog, KnowledgeBase, InsertKnowledgeBase, 
+  AgentMetrics, InsertAgentMetrics, Plugin, InsertPlugin } from "@shared/schema";
+import { eq, and, desc, asc } from "drizzle-orm";
 
 export interface IStorage {
-  // Users
+  // User management
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  createUser(insertUser: InsertUser): Promise<User>;
 
-  // Chat Sessions
-  getChatSession(id: string): Promise<ChatSession | undefined>;
-  getChatSessionsByUser(userId: string): Promise<ChatSession[]>;
-  createChatSession(session: InsertChatSession): Promise<ChatSession>;
-  updateChatSession(id: string, updates: Partial<ChatSession>): Promise<ChatSession | undefined>;
+  // Session management
+  getChatSession(sessionId: string): Promise<ChatSession | undefined>;
+  getChatSessions(userId: string): Promise<ChatSession[]>;
+  createChatSession(insertSession: InsertChatSession): Promise<ChatSession>;
+  updateChatSession(sessionId: string, updates: Partial<ChatSession>): Promise<ChatSession>;
 
-  // Messages
-  getMessagesBySession(sessionId: string): Promise<Message[]>;
-  createMessage(message: InsertMessage): Promise<Message>;
+  // Message management
+  getMessages(sessionId: string): Promise<Message[]>;
+  createMessage(insertMessage: InsertMessage): Promise<Message>;
 
-  // Agent Workflows
-  getWorkflowBySession(sessionId: string): Promise<AgentWorkflow | undefined>;
-  createWorkflow(workflow: InsertAgentWorkflow): Promise<AgentWorkflow>;
-  updateWorkflow(id: string, updates: Partial<AgentWorkflow>): Promise<AgentWorkflow | undefined>;
+  // Workflow management
+  getWorkflow(workflowId: string): Promise<Workflow | undefined>;
+  getWorkflows(sessionId: string): Promise<Workflow[]>;
+  createWorkflow(insertWorkflow: InsertWorkflow): Promise<Workflow>;
+  updateWorkflow(workflowId: string, updates: Partial<Workflow>): Promise<Workflow>;
 
-  // Documents
-  getDocumentsBySession(sessionId: string): Promise<Document[]>;
-  createDocument(document: InsertDocument): Promise<Document>;
+  // Document management
+  getDocuments(sessionId: string): Promise<Document[]>;
+  createDocument(insertDocument: InsertDocument): Promise<Document>;
+  
+  // Source management
+  getSources(workflowId: string): Promise<Source[]>;
+  createSource(insertSource: InsertSource): Promise<Source>;
 
-  // Sources
-  getSourcesBySession(sessionId: string): Promise<Source[]>;
-  createSource(source: InsertSource): Promise<Source>;
+  // Agent logs
+  getAgentLogs(workflowId: string): Promise<AgentLog[]>;
+  createAgentLog(insertLog: InsertAgentLog): Promise<AgentLog>;
 
-  // Agent Logs
-  getLogsBySession(sessionId: string): Promise<AgentLog[]>;
-  createLog(log: InsertAgentLog): Promise<AgentLog>;
+  // Knowledge base
+  searchKnowledge(query: string, limit?: number): Promise<KnowledgeBase[]>;
+  createKnowledge(insertKnowledge: InsertKnowledgeBase): Promise<KnowledgeBase>;
+  
+  // Agent metrics
+  getAgentMetrics(agentType: string): Promise<AgentMetrics[]>;
+  createAgentMetrics(insertMetrics: InsertAgentMetrics): Promise<AgentMetrics>;
+
+  // Plugin management
+  getPlugins(): Promise<Plugin[]>;
+  getPlugin(name: string): Promise<Plugin | undefined>;
+  createPlugin(insertPlugin: InsertPlugin): Promise<Plugin>;
+  updatePlugin(pluginId: string, updates: Partial<Plugin>): Promise<Plugin>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User> = new Map();
-  private chatSessions: Map<string, ChatSession> = new Map();
-  private messages: Map<string, Message> = new Map();
-  private agentWorkflows: Map<string, AgentWorkflow> = new Map();
-  private documents: Map<string, Document> = new Map();
-  private sources: Map<string, Source> = new Map();
-  private agentLogs: Map<string, AgentLog> = new Map();
-
-  // Users
+export class DatabaseStorage implements IStorage {
+  // User management
   async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.username === username);
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { 
-      ...insertUser, 
-      id, 
-      createdAt: new Date() 
-    };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
 
-  // Chat Sessions
-  async getChatSession(id: string): Promise<ChatSession | undefined> {
-    return this.chatSessions.get(id);
+  // Session management
+  async getChatSession(sessionId: string): Promise<ChatSession | undefined> {
+    const [session] = await db
+      .select()
+      .from(chatSessions)
+      .where(eq(chatSessions.id, sessionId));
+    return session || undefined;
   }
 
-  async getChatSessionsByUser(userId: string): Promise<ChatSession[]> {
-    return Array.from(this.chatSessions.values())
-      .filter(session => session.userId === userId)
-      .sort((a, b) => (b.updatedAt?.getTime() || 0) - (a.updatedAt?.getTime() || 0));
+  async getChatSessions(userId: string): Promise<ChatSession[]> {
+    try {
+      console.log('Fetching chat sessions for user:', userId);
+      const sessions = await db
+        .select()
+        .from(chatSessions)
+        .where(eq(chatSessions.userId, userId))
+        .orderBy(desc(chatSessions.updatedAt));
+      console.log('Found sessions:', sessions.length);
+      return sessions;
+    } catch (error) {
+      console.error('Error fetching chat sessions:', error);
+      // Return empty array if no sessions exist yet
+      return [];
+    }
   }
 
   async createChatSession(insertSession: InsertChatSession): Promise<ChatSession> {
-    const id = randomUUID();
-    const session: ChatSession = {
-      ...insertSession,
-      id,
-      userId: insertSession.userId || null,
-      status: insertSession.status || "active",
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    this.chatSessions.set(id, session);
+    const [session] = await db
+      .insert(chatSessions)
+      .values(insertSession)
+      .returning();
     return session;
   }
 
-  async updateChatSession(id: string, updates: Partial<ChatSession>): Promise<ChatSession | undefined> {
-    const session = this.chatSessions.get(id);
-    if (!session) return undefined;
-    
-    const updatedSession = { ...session, ...updates, updatedAt: new Date() };
-    this.chatSessions.set(id, updatedSession);
-    return updatedSession;
+  async updateChatSession(sessionId: string, updates: Partial<ChatSession>): Promise<ChatSession> {
+    const [session] = await db
+      .update(chatSessions)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(chatSessions.id, sessionId))
+      .returning();
+    return session;
   }
 
-  // Messages
-  async getMessagesBySession(sessionId: string): Promise<Message[]> {
-    return Array.from(this.messages.values())
-      .filter(message => message.sessionId === sessionId)
-      .sort((a, b) => (a.createdAt?.getTime() || 0) - (b.createdAt?.getTime() || 0));
+  // Message management
+  async getMessages(sessionId: string): Promise<Message[]> {
+    return await db
+      .select()
+      .from(messages)
+      .where(eq(messages.sessionId, sessionId))
+      .orderBy(asc(messages.createdAt));
   }
 
   async createMessage(insertMessage: InsertMessage): Promise<Message> {
-    const id = randomUUID();
-    const message: Message = {
-      ...insertMessage,
-      id,
-      sessionId: insertMessage.sessionId || null,
-      metadata: insertMessage.metadata || null,
-      createdAt: new Date()
-    };
-    this.messages.set(id, message);
+    const [message] = await db
+      .insert(messages)
+      .values(insertMessage)
+      .returning();
     return message;
   }
 
-  // Agent Workflows
-  async getWorkflowBySession(sessionId: string): Promise<AgentWorkflow | undefined> {
-    return Array.from(this.agentWorkflows.values())
-      .find(workflow => workflow.sessionId === sessionId);
+  // Workflow management
+  async getWorkflow(workflowId: string): Promise<Workflow | undefined> {
+    const [workflow] = await db
+      .select()
+      .from(workflows)
+      .where(eq(workflows.id, workflowId));
+    return workflow || undefined;
   }
 
-  async createWorkflow(insertWorkflow: InsertAgentWorkflow): Promise<AgentWorkflow> {
-    const id = randomUUID();
-    const workflow: AgentWorkflow = {
-      ...insertWorkflow,
-      id,
-      sessionId: insertWorkflow.sessionId || null,
-      status: insertWorkflow.status || "planning",
-      currentStep: insertWorkflow.currentStep || null,
-      steps: insertWorkflow.steps || null,
-      progress: insertWorkflow.progress || 0,
-      startedAt: new Date(),
-      completedAt: null
-    };
-    this.agentWorkflows.set(id, workflow);
+  async getWorkflows(sessionId: string): Promise<Workflow[]> {
+    return await db
+      .select()
+      .from(workflows)
+      .where(eq(workflows.sessionId, sessionId))
+      .orderBy(desc(workflows.startedAt));
+  }
+
+  async createWorkflow(insertWorkflow: InsertWorkflow): Promise<Workflow> {
+    const [workflow] = await db
+      .insert(workflows)
+      .values(insertWorkflow)
+      .returning();
     return workflow;
   }
 
-  async updateWorkflow(id: string, updates: Partial<AgentWorkflow>): Promise<AgentWorkflow | undefined> {
-    const workflow = this.agentWorkflows.get(id);
-    if (!workflow) return undefined;
-    
-    const updatedWorkflow = { ...workflow, ...updates };
-    if (updates.status === 'completed' && !updatedWorkflow.completedAt) {
-      updatedWorkflow.completedAt = new Date();
-    }
-    this.agentWorkflows.set(id, updatedWorkflow);
-    return updatedWorkflow;
+  async updateWorkflow(workflowId: string, updates: Partial<Workflow>): Promise<Workflow> {
+    const [workflow] = await db
+      .update(workflows)
+      .set(updates)
+      .where(eq(workflows.id, workflowId))
+      .returning();
+    return workflow;
   }
 
-  // Documents
-  async getDocumentsBySession(sessionId: string): Promise<Document[]> {
-    return Array.from(this.documents.values())
-      .filter(doc => doc.sessionId === sessionId);
+  // Document management
+  async getDocuments(sessionId: string): Promise<Document[]> {
+    return await db
+      .select()
+      .from(documents)
+      .where(eq(documents.sessionId, sessionId))
+      .orderBy(desc(documents.createdAt));
   }
 
   async createDocument(insertDocument: InsertDocument): Promise<Document> {
-    const id = randomUUID();
-    const document: Document = {
-      ...insertDocument,
-      id,
-      sessionId: insertDocument.sessionId || null,
-      content: insertDocument.content || null,
-      metadata: insertDocument.metadata || null,
-      uploadedAt: new Date()
-    };
-    this.documents.set(id, document);
+    const [document] = await db
+      .insert(documents)
+      .values(insertDocument)
+      .returning();
     return document;
   }
 
-  // Sources
-  async getSourcesBySession(sessionId: string): Promise<Source[]> {
-    return Array.from(this.sources.values())
-      .filter(source => source.sessionId === sessionId)
-      .sort((a, b) => (b.addedAt?.getTime() || 0) - (a.addedAt?.getTime() || 0));
+  // Source management
+  async getSources(workflowId: string): Promise<Source[]> {
+    return await db
+      .select()
+      .from(sources)
+      .where(eq(sources.workflowId, workflowId))
+      .orderBy(desc(sources.createdAt));
   }
 
   async createSource(insertSource: InsertSource): Promise<Source> {
-    const id = randomUUID();
-    const source: Source = {
-      ...insertSource,
-      id,
-      sessionId: insertSource.sessionId || null,
-      url: insertSource.url || null,
-      content: insertSource.content || null,
-      metadata: insertSource.metadata || null,
-      addedAt: new Date()
-    };
-    this.sources.set(id, source);
+    const [source] = await db
+      .insert(sources)
+      .values(insertSource)
+      .returning();
     return source;
   }
 
-  // Agent Logs
-  async getLogsBySession(sessionId: string): Promise<AgentLog[]> {
-    return Array.from(this.agentLogs.values())
-      .filter(log => log.sessionId === sessionId)
-      .sort((a, b) => (b.timestamp?.getTime() || 0) - (a.timestamp?.getTime() || 0));
+  // Agent logs
+  async getAgentLogs(workflowId: string): Promise<AgentLog[]> {
+    return await db
+      .select()
+      .from(agentLogs)
+      .where(eq(agentLogs.workflowId, workflowId))
+      .orderBy(asc(agentLogs.timestamp));
   }
 
-  async createLog(insertLog: InsertAgentLog): Promise<AgentLog> {
-    const id = randomUUID();
-    const log: AgentLog = {
-      ...insertLog,
-      id,
-      sessionId: insertLog.sessionId || null,
-      metadata: insertLog.metadata || null,
-      timestamp: new Date()
-    };
-    this.agentLogs.set(id, log);
+  async createAgentLog(insertLog: InsertAgentLog): Promise<AgentLog> {
+    const [log] = await db
+      .insert(agentLogs)
+      .values(insertLog)
+      .returning();
     return log;
+  }
+
+  // Knowledge base
+  async searchKnowledge(query: string, limit: number = 10): Promise<KnowledgeBase[]> {
+    // Simple text search for now - can be enhanced with vector search later
+    return await db
+      .select()
+      .from(knowledgeBase)
+      .where(eq(knowledgeBase.topic, query))
+      .limit(limit)
+      .orderBy(desc(knowledgeBase.last_used));
+  }
+
+  async createKnowledge(insertKnowledge: InsertKnowledgeBase): Promise<KnowledgeBase> {
+    const [knowledge] = await db
+      .insert(knowledgeBase)
+      .values(insertKnowledge)
+      .returning();
+    return knowledge;
+  }
+
+  // Agent metrics
+  async getAgentMetrics(agentType: string): Promise<AgentMetrics[]> {
+    return await db
+      .select()
+      .from(agentMetrics)
+      .where(eq(agentMetrics.agentType, agentType))
+      .orderBy(desc(agentMetrics.createdAt));
+  }
+
+  async createAgentMetrics(insertMetrics: InsertAgentMetrics): Promise<AgentMetrics> {
+    const [metrics] = await db
+      .insert(agentMetrics)
+      .values(insertMetrics)
+      .returning();
+    return metrics;
+  }
+
+  // Plugin management
+  async getPlugins(): Promise<Plugin[]> {
+    return await db
+      .select()
+      .from(plugins)
+      .orderBy(asc(plugins.name));
+  }
+
+  async getPlugin(name: string): Promise<Plugin | undefined> {
+    const [plugin] = await db
+      .select()
+      .from(plugins)
+      .where(eq(plugins.name, name));
+    return plugin || undefined;
+  }
+
+  async createPlugin(insertPlugin: InsertPlugin): Promise<Plugin> {
+    const [plugin] = await db
+      .insert(plugins)
+      .values(insertPlugin)
+      .returning();
+    return plugin;
+  }
+
+  async updatePlugin(pluginId: string, updates: Partial<Plugin>): Promise<Plugin> {
+    const [plugin] = await db
+      .update(plugins)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(plugins.id, pluginId))
+      .returning();
+    return plugin;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
