@@ -265,6 +265,6 @@ export abstract class BaseAgent {
     // HTTPS factor
     if (url.startsWith('https://')) score += 0.05;
     
-    return Math.max(0.1, Math.min(score, 1.0));re, 1.0));
+    return Math.max(0.1, Math.min(score, 1.0));
   }
 }

@@ -1,4 +1,4 @@
-import { AgentBase } from '../core/agent-base';
+import { BaseAgent, AgentConfig, AgentStep, AgentResult } from '../core/agent-base';
 import { pluginManager } from '../core/plugin-manager';
 import { storage } from '../storage';
 
@@ -14,69 +14,92 @@ interface Source {
   metadata?: Record<string, any>;
 }
 
-export class ResearchAgent extends AgentBase {
-  private currentSessionId: string | null = null;
-  constructor() {
-    super('research', {
-      name: 'Research Agent',
-      description: 'Conducts comprehensive research on topics',
-      capabilities: ['web_search', 'content_analysis', 'source_validation'],
+export class ResearchAgent extends BaseAgent {
+  constructor(workflowId: string, sessionId: string) {
+    const config: AgentConfig = {
+      id: 'research-agent',
+      type: 'research',
       models: {
-        primary: 'huggingface',
-        fallback: 'local'
-      }
-    });
+        primary: 'phi-3-medium',
+        fallback: 'mistral-7b',
+        embedding: 'sentence-transformer'
+      },
+      maxTokens: 4096,
+      temperature: 0.3,
+      timeoutMs: 300000, // 5 minutes for research
+      retries: 2
+    };
+    super(config, workflowId, sessionId);
   }
 
-  async executeTask(context: any): Promise<any> {
-    try {
-      this.currentSessionId = context.sessionId;
-      await this.updateWorkflowStatus('running', 'Starting research', 10);
-      await this.logMessage(context.sessionId, 'info', `Starting research on: ${context.task}`);
+  defineWorkflow(task: string): AgentStep[] {
+    return [
+      {
+        id: 'plan_research',
+        name: 'Research Planning',
+        description: 'Create comprehensive research plan and strategy',
+        status: 'pending'
+      },
+      {
+        id: 'gather_sources',
+        name: 'Source Gathering',
+        description: 'Collect relevant sources and information',
+        status: 'pending'
+      },
+      {
+        id: 'validate_sources',
+        name: 'Source Validation',
+        description: 'Validate credibility and relevance of sources',
+        status: 'pending'
+      },
+      {
+        id: 'extract_insights',
+        name: 'Insight Extraction',
+        description: 'Extract key insights and information',
+        status: 'pending'
+      },
+      {
+        id: 'synthesize_report',
+        name: 'Report Synthesis',
+        description: 'Synthesize final research report',
+        status: 'pending'
+      }
+    ];
+  }
 
-      // Create research plan
-      const plan = await this.createResearchPlan(context.task);
-      await this.updateStep('planning', 'completed', { planCreated: true });
-      await this.updateWorkflowStatus('running', 'Research plan created', 25);
-
-      // Gather sources
-      const sources = await this.gatherSources(plan);
-      await this.updateStep('source_gathering', 'completed', { sourceCount: sources.length });
-      await this.updateWorkflowStatus('running', 'Sources gathered', 50);
-
-      // Validate sources
-      const validatedSources = await this.validateSources(sources);
-      await this.updateStep('validation', 'completed', { validatedCount: validatedSources.length });
-      await this.updateWorkflowStatus('running', 'Sources validated', 75);
-
-      // Extract insights and synthesize
-      const insights = await this.extractInsights(validatedSources);
-      const report = await this.synthesizeReport(context.task, insights, validatedSources);
-
-      await this.updateWorkflowStatus('completed', 'Research Complete', 100);
-      await this.logMessage(context.sessionId, 'info', 'Research task completed successfully');
-
-      return {
-        success: true,
-        content: report,
-        metadata: {
-          sourceCount: validatedSources.length,
-          confidence: 0.85,
-          sources: validatedSources.map(s => ({ title: s.title, url: s.url }))
-        }
-      };
-
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      await this.updateWorkflowStatus('error', 'Research failed', 0);
-      await this.logMessage(context.sessionId, 'error', `Research failed: ${errorMessage}`);
-
-      return {
-        success: false,
-        content: `Research failed: ${errorMessage}`,
-        error: errorMessage
-      };
+  async executeStep(step: AgentStep, context: any): Promise<any> {
+    switch (step.id) {
+      case 'plan_research':
+        return await this.createResearchPlan(context.task);
+      case 'gather_sources':
+        return await this.gatherSources(context.step_plan_research);
+      case 'validate_sources':
+        return await this.validateSources(context.step_gather_sources);
+      case 'extract_insights':
+        return await this.extractInsights(context.step_validate_sources);
+      case 'synthesize_report':
+        return await this.synthesizeReport(context.task, context.step_extract_insights, context.step_validate_sources);
+      default:
+        throw new Error(`Unknown step: ${step.id}`);
     }
+  }
+
+  async synthesizeResult(stepOutputs: any[]): Promise<AgentResult> {
+    const finalReport = stepOutputs[stepOutputs.length - 1]; // Last step output (synthesized report)
+    const sources = stepOutputs[2] || []; // Validated sources from step 3
+    
+    return {
+      success: true,
+      content: finalReport,
+      metadata: {
+        sources: sources.map((s: Source) => ({ title: s.title, url: s.url })),
+        citations: sources.map((s: Source) => s.url || s.title),
+        confidence: 0.85,
+        processingTime: Date.now() - this.startTime.getTime(),
+        tokensUsed: 0, // Would be tracked by actual LLM calls
+        modelsUsed: [this.config.models.primary]
+      }
+    };
   }
 
   private async createResearchPlan(task: string): Promise<any> {
@@ -106,7 +129,7 @@ Format as JSON:
 `;
 
     try {
-      const planResponse = await llm.generateText(planPrompt);
+      const planResponse = await llm.execute(planPrompt);
       return JSON.parse(planResponse || '{"topics": [], "search_strategies": [], "expected_sources": 3}');
     } catch (error) {
       return {
@@ -243,7 +266,7 @@ Format as JSON:
 `;
 
       try {
-        const insightResponse = await llm.generateText(prompt);
+        const insightResponse = await llm.execute(prompt);
         const insight = JSON.parse(insightResponse || '{}');
         insights.push({ source: source.title, ...insight });
       } catch (error) {
@@ -284,7 +307,7 @@ Make it informative and well-structured.
 `;
 
     try {
-      const report = await llm.generateText(synthesisPrompt);
+      const report = await llm.execute(synthesisPrompt);
       return report || this.createFallbackReport(task, insights, sources);
     } catch (error) {
       return this.createFallbackReport(task, insights, sources);
@@ -316,17 +339,8 @@ ${sources.map(s => `- [${s.title}](${s.url || '#'})`).join('\n')}
   }
 
   private async storeSource(sourceData: Omit<Source, 'id'>): Promise<Source> {
-    const source = await storage.createSource({
-      sessionId: this.currentSessionId || 'unknown',
-      title: sourceData.title,
-      url: sourceData.url,
-      sourceType: sourceData.type,
-      content: sourceData.content,
-      metadata: sourceData.metadata
-    });
-
     return {
-      id: source.id,
+      id: Date.now().toString(),
       type: sourceData.type,
       title: sourceData.title,
       url: sourceData.url,
