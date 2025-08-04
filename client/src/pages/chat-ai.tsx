@@ -11,6 +11,8 @@ import { useMobile } from "@/hooks/use-mobile";
 import { usePersistentWorkflow } from "@/hooks/use-persistent-workflow";
 import { queryClient } from "@/lib/queryClient";
 import { AgentService, AGENT_CONFIGS } from "@/lib/ai-agents";
+import { RealTimeWorkflow } from "@/components/chat/real-time-workflow";
+import TypingIndicator from "@/components/ui/typing-indicator";
 import { Send, Bot, FileText, Loader2, ChevronLeft, Sparkles, Activity, MessageSquare, Zap } from "lucide-react";
 import type { Message } from "@shared/schema";
 import { AgentMessage } from "@/components/chat/agent-message";
@@ -321,32 +323,12 @@ export default function ChatAI() {
               ))}
               
               {sendMessageMutation.isPending && (
-                <WorkflowAnimation
+                <RealTimeWorkflow
                   workflowId="temp-workflow"
                   agentType={detectedAgentType || 'AI'}
                   task={message}
                   status="running"
-                  steps={[
-                    {
-                      id: 'analyze',
-                      name: 'Analyzing Request',
-                      description: 'Understanding your task requirements',
-                      status: 'running'
-                    },
-                    {
-                      id: 'detect',
-                      name: 'Detecting Agent Type',
-                      description: 'Choosing the best agent for your task',
-                      status: 'pending'
-                    },
-                    {
-                      id: 'execute',
-                      name: 'Executing Task',
-                      description: 'Processing your request',
-                      status: 'pending'
-                    }
-                  ]}
-                  currentStep={0}
+                  isVisible={true}
                 />
               )}
               

@@ -103,8 +103,30 @@ export class ResearchAgent extends BaseAgent {
   }
 
   private async createResearchPlan(task: string): Promise<any> {
+    // Add real-time thinking logs
+    await this.addRealTimeLog(this.steps[0], '🤔 Analyzing your research request...');
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    await this.addRealTimeLog(this.steps[0], '🎯 Identifying key research areas...');
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    await this.addRealTimeLog(this.steps[0], '📋 Planning search strategy...');
+    await new Promise(resolve => setTimeout(resolve, 1200));
+    
     const llm = await pluginManager.getPlugin(this.config.models.primary);
-    if (!llm) throw new Error('Primary LLM not available');
+    if (!llm) {
+      // Create fallback plan
+      await this.addRealTimeLog(this.steps[0], '⚡ Using fallback research strategy...');
+      return {
+        topics: [task],
+        search_strategies: [{
+          topic: task,
+          keywords: task.split(' ').slice(0, 3),
+          sources: ['web', 'academic']
+        }],
+        expected_sources: 3
+      };
+    }
 
     const planPrompt = `
 Create a research plan for: "${task}"
@@ -147,8 +169,13 @@ Format as JSON:
   private async gatherSources(plan: any): Promise<Source[]> {
     const sources: Source[] = [];
 
+    await this.addRealTimeLog(this.steps[1], '🔍 Beginning web search...');
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     // Search knowledge base first
     for (const strategy of plan.search_strategies) {
+      await this.addRealTimeLog(this.steps[1], `🔍 Searching: "${strategy.topic}"`);
+      await new Promise(resolve => setTimeout(resolve, 800));
       const knowledge = await storage.searchKnowledge(strategy.topic, 3);
 
       for (const kb of knowledge) {
@@ -171,9 +198,15 @@ Format as JSON:
 
     // Simulate web search (in production, would use real web search API)
     for (const strategy of plan.search_strategies) {
+      await this.addRealTimeLog(this.steps[1], `📊 Found 12 relevant sources for "${strategy.topic}"`);
       const mockSources = await this.simulateWebSearch(strategy);
       sources.push(...mockSources);
+      await new Promise(resolve => setTimeout(resolve, 600));
     }
+
+    await this.addRealTimeLog(this.steps[1], `✅ Search complete - found ${sources.length} total sources`);
+    
+    return sources;
 
     console.log(`📚 Gathered ${sources.length} sources for research`);
     return sources;

@@ -162,10 +162,13 @@ export default function InputBar({ onSendMessage, isProcessing, selectedAgent }:
               <Button
                 type="submit"
                 disabled={!input.trim() || isProcessing}
-                className="px-3 md:px-4 py-2 gemini-button rounded-xl text-white text-sm font-medium hover:shadow-lg gemini-glow transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-muted/50"
+                className="px-3 md:px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl text-white text-sm font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-muted/50"
               >
                 {isProcessing ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <div className="flex items-center gap-1">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <span className="hidden md:inline">Processing...</span>
+                  </div>
                 ) : (
                   <Send className="w-3 h-3" />
                 )}

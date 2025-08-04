@@ -81,6 +81,9 @@ export abstract class BaseAgent {
           
           step.status = 'running';
           step.startTime = new Date();
+          
+          // Add real-time logs for thinking process
+          await this.addRealTimeLog(step, `🧠 Starting ${step.name.toLowerCase()}...`);
           await this.updateWorkflowSteps();
           await this.logStep(step, 'started', null, null);
 
@@ -220,6 +223,13 @@ export abstract class BaseAgent {
   }
 
   // Quality assessment methods
+  // Real-time logging method
+  protected async addRealTimeLog(step: AgentStep, logMessage: string) {
+    if (!step.logs) step.logs = [];
+    step.logs.push(`[${new Date().toISOString()}] ${logMessage}`);
+    await this.updateWorkflowSteps();
+  }
+
   protected assessContentQuality(content: string): number {
     // Basic quality scoring algorithm
     let score = 0.5; // Base score
