@@ -132,9 +132,17 @@ export function AgentMessage({ message, messageIndex, totalMessages, actionCount
                   <Bot className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
                     {message.metadata?.error ? (
-                      <div className="text-red-500 whitespace-pre-wrap">{message.content}</div>
+                      <div className="text-red-500 whitespace-pre-wrap">
+                        {typeof message.content === 'object' 
+                          ? JSON.stringify(message.content, null, 2) 
+                          : String(message.content)}
+                      </div>
                     ) : (
-                      <div className="whitespace-pre-wrap">{message.content}</div>
+                      <div className="whitespace-pre-wrap">
+                        {typeof message.content === 'object' 
+                          ? JSON.stringify(message.content, null, 2) 
+                          : String(message.content)}
+                      </div>
                     )}
                     
                     {/* Metadata badges */}

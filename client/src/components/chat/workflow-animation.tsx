@@ -263,7 +263,7 @@ export function WorkflowAnimation({
                                 {currentStepLogs.map((log, logIndex) => (
                                   <div key={logIndex} className="flex items-center gap-2 animate-in slide-in-from-left-2">
                                     <div className="w-1 h-1 bg-blue-500 rounded-full animate-pulse" />
-                                    <span>{log}</span>
+                                    <span>{typeof log === 'object' ? JSON.stringify(log) : String(log)}</span>
                                   </div>
                                 ))}
                                 <div className="flex items-center gap-2 text-muted-foreground">
@@ -276,7 +276,7 @@ export function WorkflowAnimation({
                                 {step.logs.map((log, logIndex) => (
                                   <div key={logIndex} className="flex items-center gap-2">
                                     <div className="w-1 h-1 bg-muted-foreground rounded-full" />
-                                    <span>{log}</span>
+                                    <span>{typeof log === 'object' ? JSON.stringify(log) : String(log)}</span>
                                   </div>
                                 ))}
                               </div>

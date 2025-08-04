@@ -368,7 +368,9 @@ export function RealTimeWorkflow({
                       <Brain className="h-4 w-4 animate-pulse" />
                       <span className="text-sm font-medium">Currently thinking:</span>
                     </div>
-                    <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">{currentThinking}</p>
+                    <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                      {typeof currentThinking === 'object' ? JSON.stringify(currentThinking) : String(currentThinking)}
+                    </p>
                   </div>
                 </div>
               )}
@@ -409,7 +411,9 @@ export function RealTimeWorkflow({
                                 className="flex items-start gap-2 animate-in slide-in-from-left-2"
                               >
                                 <div className="w-1 h-1 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
-                                <span className="text-foreground/80">{log}</span>
+                                <span className="text-foreground/80">
+                                  {typeof log === 'object' ? JSON.stringify(log) : String(log)}
+                                </span>
                               </div>
                             ))}
                             {step.status === 'running' && (
