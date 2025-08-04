@@ -1,112 +1,80 @@
 import { useState, useEffect, useRef } from 'react';
 
-interface WorkflowStep {
-  id: string;
-  name: string;
-  description: string;
-  status: 'pending' | 'running' | 'completed' | 'failed' | 'skipped';
-  startTime?: Date;
-  endTime?: Date;
-  logs?: string[];
-  output?: any;
-  error?: string;
-}
-
 interface WorkflowData {
   id: string;
-  status: 'pending' | 'running' | 'completed' | 'failed';
-  steps: WorkflowStep[];
+  sessionId?: string;
+  session?: { id: string };
   agentType: string;
-  task: string;
-  currentStep: number;
+  task?: string;
+  status: string;
+  currentStep?: number;
+  steps?: any[];
 }
 
-export function usePersistentWorkflow(workflowId: string | undefined) {
-  const [persistedWorkflow, setPersistedWorkflow] = useState<WorkflowData | null>(null);
-  const [allSteps, setAllSteps] = useState<WorkflowStep[]>([]);
-  const [isVisible, setIsVisible] = useState(false);
-  const hideTimer = useRef<NodeJS.Timeout>();
+// Hook to persist workflow data and prevent flickering
+export function usePersistentWorkflow(activeWorkflows: WorkflowData[]) {
+  const [persistedWorkflows, setPersistedWorkflows] = useState<WorkflowData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const timeoutRef = useRef<NodeJS.Timeout>();
 
-  // Clear hide timer when workflow becomes active
-  const clearHideTimer = () => {
-    if (hideTimer.current) {
-      clearTimeout(hideTimer.current);
-      hideTimer.current = undefined;
-    }
-  };
-
-  // Set timer to hide workflow after completion
-  const scheduleHide = () => {
-    clearHideTimer();
-    hideTimer.current = setTimeout(() => {
-      setIsVisible(false);
-    }, 10000); // Hide after 10 seconds of completion
-  };
-
-  // Update persisted workflow data
-  const updateWorkflow = (workflow: WorkflowData | null) => {
-    if (!workflow) return;
-
-    setPersistedWorkflow(prev => {
-      const updated = { ...workflow };
-      
-      // Preserve all steps we've seen
-      if (prev) {
-        const mergedSteps = [...prev.steps];
-        workflow.steps.forEach(newStep => {
-          const existingIndex = mergedSteps.findIndex(s => s.id === newStep.id);
-          if (existingIndex >= 0) {
-            mergedSteps[existingIndex] = { ...newStep };
-          } else {
-            mergedSteps.push(newStep);
-          }
-        });
-        updated.steps = mergedSteps;
-      }
-
-      return updated;
-    });
-
-    // Update all steps collection
-    if (workflow.steps?.length > 0) {
-      setAllSteps(prev => {
-        const merged = [...prev];
-        workflow.steps.forEach(step => {
-          const existingIndex = merged.findIndex(s => s.id === step.id);
-          if (existingIndex >= 0) {
-            merged[existingIndex] = { ...step };
-          } else {
-            merged.push(step);
-          }
-        });
-        return merged;
-      });
-    }
-
-    // Show workflow when active
-    if (workflow.status === 'running' || workflow.status === 'pending') {
-      setIsVisible(true);
-      clearHideTimer();
-    } else if (workflow.status === 'completed' || workflow.status === 'failed') {
-      setIsVisible(true);
-      scheduleHide();
-    }
-  };
-
-  // Clean up timer on unmount
   useEffect(() => {
-    return () => clearHideTimer();
-  }, []);
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    if (activeWorkflows && activeWorkflows.length > 0) {
+      setPersistedWorkflows(activeWorkflows);
+      setIsLoading(false);
+    } else if (persistedWorkflows.length > 0) {
+      // Delay clearing workflows to prevent flicker
+      timeoutRef.current = setTimeout(() => {
+        setPersistedWorkflows([]);
+        setIsLoading(false);
+      }, 2000); // 2-second delay before clearing
+    } else {
+      setIsLoading(false);
+    }
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [activeWorkflows]);
 
   return {
-    persistedWorkflow,
-    allSteps,
-    isVisible,
-    updateWorkflow,
-    showWorkflow: () => {
-      setIsVisible(true);
-      clearHideTimer();
-    },
-    hideWorkflow: () => setIsVisible(false)
+    workflows: persistedWorkflows,
+    isLoading
   };
+}
+
+// Hook for debounced loading states
+export function useStableLoading(isLoading: boolean, delay: number = 500) {
+  const [stableLoading, setStableLoading] = useState(isLoading);
+  const timeoutRef = useRef<NodeJS.Timeout>();
+
+  useEffect(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    if (isLoading) {
+      // Show loading immediately
+      setStableLoading(true);
+    } else {
+      // Delay hiding loading to prevent flicker
+      timeoutRef.current = setTimeout(() => {
+        setStableLoading(false);
+      }, delay);
+    }
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [isLoading, delay]);
+
+  return stableLoading;
 }

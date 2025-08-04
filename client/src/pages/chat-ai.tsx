@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
 import { useMobile } from "@/hooks/use-mobile";
+import { usePersistentWorkflow } from "@/hooks/use-persistent-workflow";
 import { queryClient } from "@/lib/queryClient";
 import { AgentService, AGENT_CONFIGS } from "@/lib/ai-agents";
 import { Send, Bot, FileText, Loader2, ChevronLeft, Sparkles, Activity, MessageSquare, Zap } from "lucide-react";
@@ -76,11 +77,12 @@ export default function ChatAI() {
     }
   }, []);
 
-  // Fetch messages for current session
+  // Fetch messages for current session with reduced polling
   const { data: messages = [], refetch: refetchMessages } = useQuery<SimpleMessage[]>({
     queryKey: ['/api/sessions', sessionId, 'messages'],
     enabled: !!sessionId,
-    refetchInterval: 2000
+    refetchInterval: 4000, // Reduced from 2000ms to 4000ms
+    staleTime: 2000 // Add stale time to prevent flickering
   });
 
   // Fetch session details
@@ -89,10 +91,18 @@ export default function ChatAI() {
     enabled: !!sessionId
   });
 
-  // Fetch active workflows
+  // Fetch active workflows with smart polling
   const { data: activeWorkflows = [] } = useQuery<WorkflowData[]>({
     queryKey: ['/api/workflows/active'],
-    refetchInterval: 3000
+    refetchInterval: (data) => {
+      // Stop polling if no active workflows
+      if (!data || !Array.isArray(data) || data.length === 0) return false;
+      // Reduce polling frequency for completed workflows
+      const hasRunning = data.some((w: WorkflowData) => w.status === 'running');
+      return hasRunning ? 5000 : false; // 5s for active, stop for completed
+    },
+    refetchIntervalInBackground: false,
+    staleTime: 3000 // Prevent unnecessary refetches
   });
 
   // Fetch documents for current session
@@ -157,9 +167,9 @@ export default function ChatAI() {
 
   // Update action count based on workflows and agent activities
   useEffect(() => {
-    const count = messages.filter(m => m.role === 'assistant').length + 
-                  activeWorkflows.length + 
-                  documents.length;
+    const count = (Array.isArray(messages) ? messages.filter(m => m.role === 'assistant').length : 0) + 
+                  (Array.isArray(activeWorkflows) ? activeWorkflows.length : 0) + 
+                  (Array.isArray(documents) ? documents.length : 0);
     setActionCount(count);
   }, [messages, activeWorkflows, documents]);
 
@@ -178,16 +188,19 @@ export default function ChatAI() {
     capabilities: []
   };
 
-  const currentActiveWorkflow = activeWorkflows.find((w: WorkflowData) => 
+  // Use persistent workflow hook to prevent flickering
+  const { workflows: persistedWorkflows } = usePersistentWorkflow(Array.isArray(activeWorkflows) ? activeWorkflows : []);
+  
+  const currentActiveWorkflow = persistedWorkflows.find((w: WorkflowData) => 
     w.session?.id === sessionId || w.sessionId === sessionId
   );
 
   if (!sessionId) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-screen bg-background">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p>Starting Brevia AI...</p>
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Starting Brevia AI...</p>
         </div>
       </div>
     );

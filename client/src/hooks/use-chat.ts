@@ -6,9 +6,10 @@ import type {
   Message, 
   AgentWorkflow, 
   Source, 
-  AgentLog, 
-  AgentType 
+  AgentLog 
 } from "@shared/schema";
+
+type AgentType = 'research' | 'notes' | 'documents' | 'resume' | 'presentation';
 
 interface SessionData {
   session: ChatSession;
